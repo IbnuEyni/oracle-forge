@@ -7,12 +7,12 @@ DataAgentBench (DAB) benchmark — 54 queries, 12 datasets, 9 domains.
 ## Team
 | Name | Email | Role |
 |------|-------|------|
-| Efrata Wolde | ephratawolde990@gmail.com | - |
-| Abdurahim Miftah | abdugreat3@gmail.com | - |
+| Efrata Wolde | ephratawolde990@gmail.com | Signal Corps |
+| Abdurahim Miftah | abdugreat3@gmail.com | Signal Corps |
 | Ermiyas Bitew | ermiyasbitew239@gmail.com | - |
-| Nebiyou Abebe | nebiyouabebe6@gmail.com | - |
+| Nebiyou Abebe | nebiyouabebe6@gmail.com | Intelligence Officer |
 | Amir Ahmedin | shuaibahmedin@gmail.com | Driver |
-| Ruth Solomon | ruthsoll87@gmail.com | - |
+| Ruth Solomon | ruthsoll87@gmail.com | Intelligence Officer |
 
 ## Server
 - Host: `bloom.10academy.org`

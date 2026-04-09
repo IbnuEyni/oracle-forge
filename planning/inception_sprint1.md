@@ -79,15 +79,15 @@ by 10 Academy.
 
 ## 6. Mob Session Approval Record
 
-| Date | Approved by | Hardest question asked | Answer |
-|------|-------------|----------------------|--------|
-| | Efrata Wolde | | |
-| | Abdurahim Miftah | | |
-| | Ermiyas Bitew | | |
-| | Nebiyou Abebe | | |
-| | Ruth Solomon | | |
+| Date | Approved by | Role | Hardest question asked | Answer |
+|------|-------------|------|----------------------|--------|
+| 2026-04-09 | Nebiyou Abebe | Intelligence Officer 1 | | |
+| 2026-04-09 | Ruth Solomon | Intelligence Officer 2 | | |
+| 2026-04-09 | Abdurahim Miftah | Signal Corps 1 | | |
+| 2026-04-09 | Efrata Wolde | Signal Corps 2 | | |
+| | Ermiyas Bitew | — | Did not attend | — |
 
-**Status:** ⏳ Pending team approval — present at next mob session before writing any agent code.
+**Status:** ⏳ Pending team approval — fill in hardest question and answer for each member.
 
 ---
 
