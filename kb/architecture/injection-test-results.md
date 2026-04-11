@@ -178,4 +178,72 @@ independently, and that a warning is appended (not a silent drop).
 session. Asked "which documents mention MEMORY.md?" — only Document 3
 (claude-code-memory.md) was identified. No duplication found.
 
-**KB v1 status: COMPLETE — all documents injection-tested and verified.**
+**KB v1 status: COMPLETE -- all documents injection-tested and verified.**
+
+---
+---
+
+# KB v2 Injection Test Results
+
+**Author:** Intelligence Officers, BLOOM Team
+**Date:** 2026-04-11
+**Method:** Same as KB v1 -- each document pasted into a fresh claude.ai session with no prior context. Test question sent in the same message. Evaluated against: correct, complete, no hedging.
+
+**Test environment:** claude.ai -- no project attached, no prior conversation.
+
+---
+
+## Document 5: unstructured-field-inventory.md
+
+**Test question:**
+> Based on the document above: A query asks "how many cancellations were pricing-related?" but there is no cancellation_reason column. What should the agent do?
+
+**Response received:**
+> The agent should check unstructured text fields -- specifically `customers.notes` and `interactions.transcript` -- using pattern matching (`ILIKE '%cancel%'` combined with `ILIKE '%pric%'` or `ILIKE '%expensive%'`). It should not report "data not available." The result should be qualified as approximate since it's based on keyword matching.
+
+**Verdict: PASS**
+- Correct: named the right fields (`customers.notes`, `interactions.transcript`)
+- Complete: included pattern matching method and confidence caveat
+- No hedging: answered directly from document, no pretraining fill
+
+---
+
+## Document 6: join-key-glossary.md
+
+**Test question:**
+> Based on the document above: How do I join user data between PostgreSQL and MongoDB when user_id is 'USR-1042' in PostgreSQL and userId is 1042 in MongoDB?
+
+**Response received:**
+> Strip the `USR-` prefix first, then cast to integer. Warned that `CAST('USR-1042' AS INTEGER)` would error if you skip the strip step. Also noted the field name mismatch (`user_id` vs `userId`).
+
+**Verdict: PASS**
+- Correct: strip prefix then cast, correct order of operations
+- Complete: covered the pitfall (cast before strip = error) and field name casing
+- No hedging: direct answer from document
+
+---
+
+## Document 7: dab-failure-categories.md
+
+**Test question:**
+> Based on the document above: What are the 4 DAB failure categories and why does the ill-formatted join keys category cause agent failures?
+
+**Response received:**
+> Named all 4 categories: multi-database integration, ill-formatted join keys, unstructured text transformation, domain knowledge gaps. Explained that join keys fail because the same entity has different ID formats across databases (e.g., `USR-1042` vs `1042`), so a raw join returns zero rows. Referenced the KB v2 glossary as the mitigation.
+
+**Verdict: PASS**
+- Correct: all 4 categories named, join key failure mechanism accurate
+- Complete: included the zero-rows consequence and normalization fix
+- No hedging: answered from document only
+
+---
+
+## KB v2 Summary
+
+| Document | Test Question | Verdict | Notes |
+|---|---|---|---|
+| unstructured-field-inventory.md | Cancellation query with no structured column | PASS | First attempt |
+| join-key-glossary.md | Join user data across PostgreSQL and MongoDB | PASS | First attempt |
+| dab-failure-categories.md | Name 4 failure categories + explain join key failures | PASS | First attempt |
+
+**KB v2 status (Nebiyou's sections): COMPLETE -- all 3 documents injection-tested and verified.**
