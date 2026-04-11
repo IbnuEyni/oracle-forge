@@ -27,3 +27,35 @@ df['state'] = df['description'].str.extract(r',\s*([A-Z]{2})')
 ```
 
 ---
+
+---
+
+## Correction 002 — 2026-04-11
+
+**Queries affected:** Q1, Q2, Q4, Q7 (Yelp dataset)
+
+**What was wrong:**
+Agent joins DuckDB `review` table with MongoDB `business` collection using wrong key.
+- DuckDB `review` table uses `business_ref` field (e.g. `businessref_9`)
+- MongoDB `business` collection uses `business_id` field (e.g. `businessid_9`)
+- Agent attempts direct join without resolving the format difference → wrong results or TypeError
+
+**Correct approach:**
+Strip the prefix before joining:
+- `business_ref` → remove `businessref_` prefix → get integer ID
+- `business_id` → remove `businessid_` prefix → get integer ID
+- Then join on the integer ID
+
+**Example correct Python code:**
+```python
+import pandas as pd
+# df_reviews from DuckDB, df_business from MongoDB
+df_reviews['id'] = df_reviews['business_ref'].str.replace('businessref_', '').astype(int)
+df_business['id'] = df_business['business_id'].str.replace('businessid_', '').astype(int)
+merged = pd.merge(df_reviews, df_business, on='id')
+```
+
+**Q7 additional issue:**
+TypeError: expected str, bytes or os.PathLike object, not list
+— agent passes a list where a string path is expected when reading stored results.
+Fix: always check type before passing to open() — use json.dumps() if result is already a dict/list.
