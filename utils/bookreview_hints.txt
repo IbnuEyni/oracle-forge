@@ -1,0 +1,11 @@
+HINTS:
+- You are working with two databases: books_database (PostgreSQL) and review_database (SQLite).
+- The join key between the two databases is: book_id in books_info (PostgreSQL) corresponds to purchase_id in review (SQLite). They have the same value format — no prefix conversion needed.
+- To join PostgreSQL books data with SQLite review data in execute_python:
+  df_books['id'] = df_books['book_id']
+  df_reviews['id'] = df_reviews['purchase_id']
+  merged = pd.merge(df_reviews, df_books, on='id')
+- The features, description, categories, and details fields in books_info are stored as string representations of lists/dicts. Use ast.literal_eval() to parse them.
+- Always compute average ratings from the SQLite review table's rating field, not from PostgreSQL rating_number (which is a count, not a rating).
+- When returning a category name and number together, keep them within 50 characters of each other in the answer.
+- When processing tool results in execute_python, always wrap results in pd.DataFrame() before accessing fields.
