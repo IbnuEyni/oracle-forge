@@ -65,11 +65,12 @@ def log_score(
 if __name__ == '__main__':
     import tempfile
     tmp = Path(tempfile.mktemp(suffix='.jsonl'))
-    original = SCORE_LOG
-
-    import utils.score_logger as _self
-    _self.SCORE_LOG = tmp
-    entry = _self.log_score('test', 'test-model', [
+    # Temporarily override SCORE_LOG for test
+    import sys
+    _mod = sys.modules[__name__]
+    _original = _mod.SCORE_LOG
+    _mod.SCORE_LOG = tmp
+    entry = log_score('test', 'test-model', [
         {'query_id': 1, 'passed': True,  'answer': '42'},
         {'query_id': 2, 'passed': False, 'answer': ''},
     ])
@@ -77,5 +78,5 @@ if __name__ == '__main__':
     assert entry['pass_at_1_pct'] == 50.0
     assert tmp.exists()
     tmp.unlink()
-    _self.SCORE_LOG = original
+    _mod.SCORE_LOG = _original
     print('score_logger: PASS')

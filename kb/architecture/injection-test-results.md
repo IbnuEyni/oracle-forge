@@ -247,3 +247,84 @@ session. Asked "which documents mention MEMORY.md?" — only Document 3
 | dab-failure-categories.md | Name 4 failure categories + explain join key failures | PASS | First attempt |
 
 **KB v2 status (Nebiyou's sections): COMPLETE -- all 3 documents injection-tested and verified.**
+
+---
+
+## Document 8: domain_term_definitions.md
+
+**Author:** Ruth Solomon, BLOOM Team — Intelligence Officer
+**Date:** 2026-04-15
+
+**Test question:**
+> Based on the document above: A query asks for the "churn rate" of customers. How should the agent define churn, and what mistake should it avoid?
+
+**Response received:**
+> Churn refers to customers who were previously active but have since stopped transacting or engaging. The agent must distinguish between never-active/new customers and previously active customers who left. The key mistake to avoid is conflating new customers who never converted with churned customers — this inflates the churn rate and mislabels healthy segments as at-risk.
+
+**Verdict: PASS**
+- Correct: definition matches document (previously active, stopped transacting)
+- Complete: named the specific mistake (conflating new vs churned)
+- No hedging: direct answer from document only
+
+---
+
+## Document 9: dab_schema_descriptions.md
+
+**Author:** Ruth Solomon, BLOOM Team — Intelligence Officer
+**Date:** 2026-04-15
+
+**Test question:**
+> Based on the document above: What databases does the Yelp dataset use, and what is the known challenge when joining data across them?
+
+**Response received:**
+> The Yelp dataset uses MongoDB and DuckDB. MongoDB stores business location data and DuckDB stores ratings. The known challenge is joining MongoDB business documents to DuckDB ratings records without a clean shared key — the join keys use different prefix formats across the two databases.
+
+**Verdict: PASS**
+- Correct: MongoDB + DuckDB named, join key challenge described accurately
+- Complete: covered both the database types and the specific join difficulty
+- No hedging: answered from document, no outside knowledge added
+
+---
+
+## Document 10: pass1_scoring.md
+
+**Author:** Ruth Solomon, BLOOM Team — Intelligence Officer
+**Date:** 2026-04-15
+
+**Test question:**
+> Based on the document above: What does pass@1 measure and what is the current state-of-the-art score on the DAB leaderboard?
+
+**Response received:**
+> pass@1 measures the percentage of queries where the agent produces a correct answer on its first attempt — retries are not counted. The current state-of-the-art on the DAB leaderboard is 54.3% (PromptQL + Gemini 3.1 Pro). The original DAB paper reports 38% for the best plain frontier model without additional engineering.
+
+**Verdict: PASS**
+- Correct: definition accurate (first attempt only, no retries), scores match document
+- Complete: covered both the 54.3% leaderboard score and the 38% baseline
+- No hedging: direct answer from document
+
+---
+
+## KB v2 Layer 2 Impact Evidence
+
+**What changed when Layer 2 domain docs were injected:**
+
+Before Layer 2 injection (hints only, no domain KB):
+- Q1: FAIL — agent returned 3.86 instead of 3.55 (did not know to CAST rating AS FLOAT)
+- Q2: FAIL — agent returned wrong state MO instead of PA (did not know state is in description field)
+
+After Layer 2 + Layer 3 injection (domain KB + corrections):
+- Q1: PASS — 3.55 correct
+- Q2: PASS — PA correct
+
+The join-key-glossary.md and corrections.md together provided the normalization pattern (`businessref_` → int) and the CAST fix that resolved both queries. Score: 28.6% → 57.1%.
+
+**KB v2 status: COMPLETE — all 5 documents injection-tested and verified.**
+
+| Document | Test Question | Verdict | Author |
+|---|---|---|---|
+| unstructured-field-inventory.md | Cancellation query with no structured column | PASS | Nebiyou |
+| join-key-glossary.md | Join user data across PostgreSQL and MongoDB | PASS | Nebiyou |
+| dab-failure-categories.md | Name 4 failure categories + explain join key failures | PASS | Nebiyou |
+| domain_term_definitions.md | Define churn and what mistake to avoid | PASS | Ruth |
+| dab_schema_descriptions.md | Yelp databases and join challenge | PASS | Ruth |
+| pass1_scoring.md | What pass@1 measures and current leaderboard score | PASS | Ruth |
