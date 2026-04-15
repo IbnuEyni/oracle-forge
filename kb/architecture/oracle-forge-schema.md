@@ -160,7 +160,7 @@ Source: DataAgentBench Yelp dataset.
 
 | Field | Type | Notes |
 |---|---|---|
-| business_id | String | Primary identifier, 22-char string |
+| business_id | String | Primary identifier, prefixed format e.g. `businessid_9`. Strip `businessid_` prefix to get integer ID for cross-DB joins |
 | name | String | Business name |
 | address | String | Street address |
 | city | String | |
@@ -177,6 +177,9 @@ Source: DataAgentBench Yelp dataset.
 
 **No SQL joins apply.** Use `find()` or an aggregation pipeline.
 Cross-database references via `business_id` are resolved in application code.
+**Join Key Warning:** MongoDB `business_id` uses `businessid_` prefix (e.g. `businessid_9`).
+DuckDB `business_ref` uses `businessref_` prefix (e.g. `businessref_9`).
+Strip both prefixes to integer before joining.
 
 ---
 
@@ -190,7 +193,7 @@ Source: DataAgentBench Yelp dataset.
 |---|---|---|
 | review_id | VARCHAR | PRIMARY KEY, 22-char string |
 | user_id | VARCHAR | References PostgreSQL users.user_id |
-| business_id | VARCHAR | References MongoDB business.business_id — see Join Key Warning |
+| business_ref | VARCHAR | Prefixed format e.g. `businessref_9`. Strip `businessref_` prefix to get integer ID. References MongoDB business.business_id |
 | stars | INTEGER | Rating 1–5 |
 | useful | INTEGER | Useful votes received |
 | funny | INTEGER | Funny votes received |
@@ -198,8 +201,9 @@ Source: DataAgentBench Yelp dataset.
 | text | VARCHAR | Full review text |
 | date | VARCHAR | ISO timestamp of review |
 
-**No DuckDB-internal joins apply.** Cross-database references via `business_id` and
-`user_id` are resolved in application code.
+**No DuckDB-internal joins apply.** Cross-database references via `business_ref` and
+`user_id` are resolved in application code. Strip `businessref_` prefix from `business_ref`
+and `businessid_` prefix from MongoDB `business_id` to get matching integer IDs.
 
 ---
 
