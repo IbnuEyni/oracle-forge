@@ -141,11 +141,11 @@ Initial testing used direct Gemini API (`generativelanguage.googleapis.com`).
 
 After discussion with instructors, switched to OpenRouter for model flexibility and to avoid single-provider dependency.
 
-| Run | Date | Model | Datasets | Score | Notes |
-|-----|------|-------|----------|-------|-------|
-| Run 4 | April 15 | google/gemini-3.1-pro-preview via OpenRouter | Yelp | 2/7 = **28.6%** | Proxy behavior differs from direct API |
-| Run 5 | April 15 | google/gemini-3.1-pro-preview via OpenRouter + CAST fix | Yelp | 2/7 = **28.6%** | BIGINT bug fixed |
-| Run 6 | April 15 | google/gemini-3.1-pro-preview via OpenRouter + KB injection | Yelp + bookreview | 4/10 = **40.0%** ✅ | Beats 38% DAB baseline |
+| Run   | Date     | Model                                                       | Datasets          | Score               | Notes                                  |
+| ----- | -------- | ----------------------------------------------------------- | ----------------- | ------------------- | -------------------------------------- |
+| Run 4 | April 15 | google/gemini-3.1-pro-preview via OpenRouter                | Yelp              | 2/7 = **28.6%**     | Proxy behavior differs from direct API |
+| Run 5 | April 15 | google/gemini-3.1-pro-preview via OpenRouter + CAST fix     | Yelp              | 2/7 = **28.6%**     | BIGINT bug fixed                       |
+| Run 6 | April 15 | google/gemini-3.1-pro-preview via OpenRouter + KB injection | Yelp + bookreview | 4/10 = **40.0%** ✅ | Beats 38% DAB baseline                 |
 
 **Key insight:** Best confirmed score is 57.1% via direct Gemini API. Via OpenRouter, 40% across 2 datasets (Yelp + bookreview) beats the 38% frontier model baseline.
 
@@ -168,6 +168,7 @@ Oracle Forge follows the AWS AI-DLC framework — Inception → Construction →
 **Interim milestone (April 14) — all 7 items met ✅**
 
 **What changed from plan during Construction:**
+
 - Switched to OpenRouter after instructor discussion — avoids single-provider dependency
 - Two critical bugs found and fixed: BIGINT CAST + MongoDB query limit
 - KB injection wired into agent ahead of schedule
@@ -191,23 +192,54 @@ Documented in `planning/inception_sprint2.md` — pending team approval at next 
 
 ## What's Left (April 16–18)
 
-| Task                                   | Owner                 | Status               |
-| -------------------------------------- | --------------------- | -------------------- |
-| Fix Q2, Q3, Q4, Q7 failures            | Driver                | 🔄 In progress       |
+| Task                                   | Owner                 | Status                           |
+| -------------------------------------- | --------------------- | -------------------------------- |
+| Fix Q2, Q3, Q4, Q7 failures            | Driver                | 🔄 In progress                   |
 | Run all 12 datasets                    | Driver                | 🔄 2/12 done (Yelp + bookreview) |
-| Adversarial probe library (15+ probes) | Driver + IOs          | ❌                   |
-| KB v3 corrections                      | Intelligence Officers | ✅ Nebiyou committed |
-| 50 trials per query for submission     | Driver                | ❌                   |
-| DAB GitHub PR                          | Driver                | ❌                   |
-| Signal Corps articles published        | Signal Corps          | ❌                   |
-| Demo video (max 8 min)                 | All                   | ❌                   |
-| AI-DLC Operations document             | Driver                | ❌                   |
+| Adversarial probe library (15+ probes) | Intelligence Officers | ✅ 17 probes done                |
+| KB v3 corrections                      | Intelligence Officers | ✅ Committed                     |
+| 5 trials per query for submission      | Driver                | ❌                               |
+| DAB GitHub PR                          | Driver                | ❌                               |
+| Signal Corps articles published        | Signal Corps          | ❌                               |
+| Demo video (max 8 min)                 | All                   | ❌                               |
+| AI-DLC Operations document Sprint 2    | Driver                | ❌                               |
+| Sprint 2 Inception approved            | All                   | ✅ Approved today                |
+
+---
+
+## Plan — April 16 to 18
+
+### April 16 (Today)
+
+- **Driver:** Load remaining 10 datasets on server (googlelocal, agnews, stockmarket, stockindex, crmarenapro, deps_dev, github_repos, music_brainz, pancancer, patents)
+- **Driver:** Create hints files for each new dataset
+- **Intelligence Officers:** KB domain docs for new datasets
+- **Signal Corps:** Draft articles (600–1000 words each)
+
+### April 17
+
+- **Driver:** Run agent on all 12 datasets, collect results
+- **Driver:** Fix remaining Yelp failures (Q2, Q3, Q4, Q7)
+- **Signal Corps:** Publish articles on LinkedIn/Medium, post benchmark X thread
+
+### April 18 — Submission Day
+
+- **Driver:** Run 5 trials on all 54 queries
+- **Driver:** Format results JSON per DAB submission spec
+- **Driver:** Fork ucbepic/DataAgentBench, open GitHub PR
+- **Driver:** Record demo video (max 8 minutes)
+- **Driver:** Commit AI-DLC Operations document for Sprint 2
+- **Signal Corps:** Post benchmark results on X, link to DAB PR
+- **All:** Final submission PR to programme repository
+
+---
 
 ---
 
 ## Agent Trial-and-Error Control
 
 Three controls prevent excessive runtime and hallucinations:
+
 1. **Hard iteration cap** — `--iterations 15` is a hard ceiling per query
 2. **Corrections log injected at session start** — agent reads past failures before answering, doesn't repeat known mistakes
 3. **Hints file as guardrails** — explicit join key patterns, CAST requirements, no-limit MongoDB per dataset
@@ -220,9 +252,9 @@ Failure detection is currently manual — Driver reads logs, diagnoses, writes c
 
 **What worked:**
 
-- Context engineering is the real bottleneck — hints file improved score from 0% to 57%
+- Context engineering is the real bottleneck — hints file improved score from 0% to 40%+
 - KB injection working — 16K chars of domain knowledge injected at every session start
-- Team compounding — IOs built KB independently while Driver ran agent
+- Team compounding — IOs built 17 probes + KB independently while Driver ran agent
 
 **What we learned:**
 
@@ -232,33 +264,8 @@ Failure detection is currently manual — Driver reads logs, diagnoses, writes c
 
 **The gap:**
 
-- 57% on Yelp (7 queries) vs unknown score on all 54 queries
-- Week 9 is about scaling what works on Yelp to all 12 datasets
-
----
-
-## Plan — April 16 to 18
-
-### April 16
-- **Driver:** Run all 7 Yelp queries with gemini-3.1-pro-preview via OpenRouter, record new baseline
-- **Driver:** Start adversarial probe library — document BIGINT bug and MongoDB limit bug as first probes
-- **Intelligence Officers:** KB v3 — add corrections from this week's failures
-- **Signal Corps:** Draft articles (600–1000 words each)
-- **All:** Mob session — approve Sprint 2 Inception document
-
-### April 17
-- **Driver:** Load remaining datasets (googlelocal, agnews, stockmarket, stockindex)
-- **Driver:** Create hints files per dataset, run agent on all 12 datasets
-- **Intelligence Officers:** KB domain docs for new datasets
-- **Signal Corps:** Publish articles on LinkedIn/Medium, post benchmark X thread
-
-### April 18 — Submission Day
-- **Driver:** Run 50 trials on all 54 queries (overnight run April 17→18)
-- **Driver:** Format results JSON, fork ucbepic/DataAgentBench, open GitHub PR
-- **Driver:** Record demo video (max 8 minutes)
-- **Driver:** Commit AI-DLC Operations document for Sprint 2
-- **Signal Corps:** Post benchmark results on X, link to DAB PR
-- **All:** Final submission PR to programme repository
+- 40% on 10 queries (2 datasets) vs unknown score on all 54 queries
+- Week 9 is about scaling what works on Yelp + bookreview to all 12 datasets
 
 ---
 
