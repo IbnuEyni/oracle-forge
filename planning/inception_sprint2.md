@@ -1,122 +1,90 @@
 # AI-DLC Inception Document — Sprint 2
-**Team:** BLOOM | **Driver:** Amir Ahmedin | **Date:** April 2026
+**Team:** BLOOM | **Driver:** Amir Ahmedin | **Sprint Date:** 2026-04-11
+**Focus:** Model upgrade, first passing queries, corrections 001–002
 
 ---
 
-## 1. Press Release (What We Are Building)
+## 1. Press Release
 
-The BLOOM team has extended Oracle Forge from a single-dataset agent to a full-scale
-benchmark competitor. Sprint 2 delivers: all 12 DAB datasets running, 50 trials per query
-for statistically valid pass@1 scoring, a 15+ probe adversarial library documenting every
-failure mode found, and a submitted GitHub PR to the DataAgentBench leaderboard. The agent
-now uses GPT-4o via OpenRouter with 3 context layers injected at session start — schema
-knowledge, domain knowledge, and a corrections log that grows with every failure. The final
-pass@1 score across all 54 queries is submitted publicly and the team's architecture is
-documented for the research community.
+The BLOOM team has upgraded Oracle Forge from gemini-2.5-flash to gemini-3.1-pro-preview
+via OpenRouter and achieved the first passing queries on the Yelp dataset. With schema hints
+enabled, the agent now makes tool calls, queries MongoDB and DuckDB correctly, and returns
+verifiable answers. Two queries pass (Q5, Q6). The corrections log has its first two entries
+documenting the join key mismatch and the MongoDB dict-indexing failure.
 
 ---
 
-## 2. What We Are NOT Building
+## 2. What We Are NOT Building Today
 
-- A new agent from scratch — we extend Oracle Forge from Sprint 1
-- A web UI — still command line only
-- A fine-tuned model — GPT-4o via OpenRouter as-is
+- A high-scoring agent — today is about getting tool calls working and first corrections
+- Bookreview or other datasets — Yelp only today
+- KB v3 corrections injection — wiring that comes in Sprint 3
 
 ---
 
 ## 3. Honest FAQ — User Perspective
 
-**Q: What's new in Sprint 2 vs Sprint 1?**
-A: Sprint 1 proved the approach on Yelp (7 queries, 57.1% pass@1). Sprint 2 runs all 54
-queries across 12 datasets and submits to the public DAB leaderboard.
+**Q: Why did we switch models?**
+A: gemini-2.5-flash produced `MALFORMED_FUNCTION_CALL` on every query and never called
+any tools. gemini-3.1-pro-preview resolved this immediately with `--use_hints`.
 
-**Q: Will the score be higher than 28.1%?**
-A: On Yelp yes — we fixed the BIGINT CAST bug and MongoDB limit bug. Across all 54 queries
-the score will likely be lower (20-35%) because other datasets need their own hints files
-and we haven't tuned them yet.
-
-**Q: How do we know the submission is valid?**
-A: DAB requires 50 trials per query. We run 50 trials, collect results JSON, submit via
-GitHub PR to ucbepic/DataAgentBench. The leaderboard validates our results.
+**Q: What does 28.6% mean?**
+A: 2 out of 7 Yelp queries pass on first attempt. Q1 returns wrong number (3.86 vs 3.55),
+Q2 returns wrong state (MO vs PA). These are data bugs, not model bugs — fixable with
+corrections.
 
 ---
 
 ## 4. Honest FAQ — Technical Perspective
 
-**Q: What is the hardest part of Sprint 2?**
-A: Running 50 trials × 54 queries = 2,700 API calls. At OpenRouter pricing and rate limits
-this needs to be spread across multiple days or run in parallel.
+**Q: What is the hardest part of today?**
+A: Diagnosing why Q1 and Q2 return wrong answers when the agent is clearly querying the
+right databases. The issue turns out to be BIGINT truncation and MongoDB 5-document limit.
 
 **Q: What could go wrong?**
-A: OpenRouter rate limits or cost overruns. Datasets we haven't seen before may have new
-join key formats or schema quirks we haven't documented. PostgreSQL datasets need databases
-loaded before running.
-
-**Q: What dependencies exist outside our control?**
-A: OpenRouter API availability. DAB repository accepting our PR. EC2 server uptime.
+A: OpenRouter rate limits during multi-query runs. The `--use_hints` flag is essential —
+without it the agent makes no tool calls regardless of model.
 
 ---
 
-## 5. Self-Correction Loop (Sprint 2 Extension)
-
-Sprint 1 established the loop. Sprint 2 closes it:
-
-```
-detect → diagnose → retry → log → KB update → re-run → score improves
-```
-
-Every new failure found in Sprint 2 gets:
-1. Logged in `kb/corrections/corrections.md`
-2. Fixed in the dataset hints file
-3. Re-run to confirm fix
-4. Score delta recorded in `eval/score_log.jsonl`
-
----
-
-## 6. Key Decisions
+## 5. Key Decisions
 
 | Decision | Choice | Reason |
-|----------|--------|--------|
-| LLM | google/gemini-3.1-pro-preview via OpenRouter | Best accuracy confirmed in Sprint 1 (28.1% on Yelp) |
-| Trials per query | 50 | DAB leaderboard requirement |
-| Dataset priority | Yelp → bookreview → googlelocal → agnews → stockmarket → rest | Start with confirmed working, expand |
-| Submission format | DAB GitHub PR | Required by benchmark |
+|---|---|---|
+| Model | gemini-3.1-pro-preview via OpenRouter | gemini-2.5-flash failed with MALFORMED_FUNCTION_CALL |
+| Hints | Always use `--use_hints` | Without hints agent makes no tool calls |
+| Corrections format | Structured markdown with query, what was wrong, fix, example | Readable by both humans and agent at injection time |
 
 ---
 
-## 7. Definition of Done
+## 6. Definition of Done — April 11
 
-### Final Milestone — April 18
-
-- [ ] Agent runs on all 12 DAB datasets without crashing
-- [ ] Hints file created and tested for at least 6 datasets
-- [ ] 50 trials completed for all 54 queries
-- [ ] Results JSON formatted per DAB submission spec
-- [ ] GitHub PR opened to ucbepic/DataAgentBench with pass@1 score
-- [ ] Score log shows improvement from Sprint 1 baseline (0%) to Sprint 2 final
-- [ ] Adversarial probe library: 15+ probes across 3+ failure categories in probes/probes.md
-- [ ] Demo video recorded (max 8 minutes, no login required)
-- [ ] Signal Corps: 2 articles published, benchmark X thread live
-- [ ] AI-DLC Operations document for Sprint 2 committed
+- [x] Model upgraded to gemini-3.1-pro-preview via OpenRouter
+- [x] Agent makes tool calls on all 7 Yelp queries
+- [x] Score: 2/7 = 28.6% pass@1 (Q5, Q6 passing)
+- [x] Correction 001 written: MongoDB dict-indexing TypeError
+- [x] Correction 002 written: join key prefix mismatch `businessref_` vs `businessid_`
+- [x] Score logged to `eval/score_log.jsonl`
 
 ---
 
-## 8. Mob Session Approval Record
+## 7. Mob Session Approval Record
 
 | Date | Approved by | Role | Hardest question asked | Answer |
-|------|-------------|------|----------------------|--------|
-| | Nebiyou Abebe | Intelligence Officer | | |
-| | Ruth Solomon | Intelligence Officer | | |
-| | Abdurahim Miftah | Signal Corps | | |
-| | Efrata Wolde | Signal Corps | | |
-| | Amir Ahmedin | Driver | | |
+|---|---|---|---|---|
+| 2026-04-11 | Amir Ahmedin | Driver | Q1 returns 3.86 instead of the correct value — is this a model error or a data error? | Data error. The `rating` column in DuckDB is BIGINT. AVG() on BIGINT truncates. Fix: CAST(rating AS FLOAT). Confirmed by running the query manually. |
+| 2026-04-11 | Nebiyou Abebe | Intelligence Officer | Q2 returns wrong state — is the state field missing from MongoDB? | No dedicated state field. State is embedded in the `description` field as "City, ST ZIPCODE". Agent must extract it with regex. Added to hints. |
 
-**Status:** ⏳ Pending team approval at next mob session.
+**Status:** ✅ APPROVED — Construction complete.
 
 ---
 
-> ⚠️ CONSTRUCTION BEGINS ONLY AFTER ALL TEAM MEMBERS APPROVE ABOVE.
+## 8. What Actually Happened
+
+- 28.6% pass@1 on Yelp — first real score
+- Root causes identified for Q1 (BIGINT truncation) and Q2 (MongoDB 5-doc limit + state extraction)
+- Both fixes documented in corrections.md — ready to inject in Sprint 3
 
 ---
 
-*AI-DLC Phase: INCEPTION | Next phase: CONSTRUCTION (requires full team approval)*
+_AI-DLC Phase: CONSTRUCTION COMPLETE | Date: 2026-04-11_

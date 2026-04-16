@@ -1,165 +1,98 @@
 # AI-DLC Inception Document — Sprint 1
-
-**Team:** BLOOM | **Driver:** Amir Ahmedin | **Date:** April 2026
-
----
-
-## 1. Press Release (What We Are Building)
-
-The BLOOM team has built Oracle Forge — a production-grade natural language data analytics
-agent that answers complex business questions across heterogeneous databases. Oracle Forge
-connects to PostgreSQL, MongoDB, SQLite, and DuckDB simultaneously, resolves inconsistently
-formatted join keys automatically, extracts structured facts from unstructured text fields,
-and returns verifiable answers with full query traces. When a query fails, the agent detects
-the failure, diagnoses the root cause, retries with a fix, and logs the correction for future
-sessions. It is evaluated against the DataAgentBench benchmark (54 queries, 12 datasets,
-9 domains) and achieves a measurable pass@1 score that improves between Week 8 and Week 9.
-The agent runs on the BLOOM team's shared EC2 server and is accessible to all team members
-from any device.
+**Team:** BLOOM | **Driver:** Amir Ahmedin | **Sprint Date:** 2026-04-09
+**Focus:** Infrastructure setup, KB v1 architecture, agent scaffold, first run attempt
 
 ---
 
-## 2. What We Are NOT Building
+## 1. Press Release
 
-- A web UI or chat interface — interaction is command line only this sprint
-- A general-purpose SQL assistant — Oracle Forge is scoped to DAB datasets only
-- A fine-tuned model — we use Gemini API as-is, no model training
+The BLOOM team has stood up Oracle Forge on the shared EC2 server. The agent connects to
+MongoDB and DuckDB simultaneously, injects schema knowledge from the Knowledge Base before
+every query, and runs against the Yelp dataset from DataAgentBench. The infrastructure is
+live, the Knowledge Base v1 architecture documents are committed and injection-tested, and
+the team has a working baseline to improve from.
+
+---
+
+## 2. What We Are NOT Building Today
+
+- A passing agent — today is infrastructure and KB, not score optimisation
+- A web UI — command line only
+- A fine-tuned model — Gemini API as-is via OpenRouter
 
 ---
 
 ## 3. Honest FAQ — User Perspective
 
-**Q: What can I ask Oracle Forge?**
-A: Complex business questions that require data from multiple databases simultaneously.
-Example: "What is the average rating of businesses in Indianapolis?" — the agent queries
-MongoDB for business locations and DuckDB for ratings, joins the results, and returns
-a verified answer.
+**Q: What can Oracle Forge do after today?**
+A: Connect to MongoDB and DuckDB, receive a natural language question, and attempt to
+answer it. It will not pass most queries yet — the KB and hints are not complete.
 
-**Q: What does it NOT do yet?**
-A: It does not yet handle all 12 DAB datasets. Sprint 1 targets the Yelp dataset first,
-then expands. It also does not have a web interface — interaction is via command line.
-
-**Q: How do I know the answer is correct?**
-A: Every answer comes with a query trace — the exact queries run against each database,
-in order. You can verify the answer by re-running the queries manually.
+**Q: How do we know the infrastructure works?**
+A: The agent runs without crashing. MongoDB restores the Yelp dataset. DuckDB connects.
+The KB injector prints confirmation: `[Oracle Forge] KB injected: N chars added`.
 
 ---
 
 ## 4. Honest FAQ — Technical Perspective
 
-**Q: What is the hardest part of this sprint?**
-A: Cross-database join key resolution. Business IDs are formatted differently across
-MongoDB and DuckDB in the same dataset. The agent must detect and resolve format
-mismatches before attempting joins — without being told explicitly.
+**Q: What is the hardest part of today?**
+A: Getting the KB injection wired before the first LLM call without modifying the DAB
+scaffold. Monkey-patching `DataAgent.__init__` is the chosen approach.
 
 **Q: What could go wrong?**
-A: Gemini API rate limits will slow down evaluation runs. PostgreSQL is running in Docker
-(not system-level) — if the container stops, PostgreSQL goes down. The DuckDB user_database
-file for Yelp appears corrupted and needs re-downloading before queries 2-7 can pass.
+A: gemini-2.5-flash may not make tool calls at all — this is an unknown until we run it.
+PostgreSQL Docker container may not start cleanly on the EC2 instance.
 
 **Q: What dependencies exist outside our control?**
-A: Gemini API availability and quota limits. The DAB repository structure. The EC2 server
-uptime managed by 10 Academy.
+A: Gemini API availability. EC2 server uptime managed by 10 Academy.
 
 ---
 
-## 5. Self-Correction Loop
+## 5. Key Decisions
 
-Every agent failure must follow this pattern:
-
-```
-detect → diagnose → retry → log
-```
-
-| Step     | What happens                                                                       |
-| -------- | ---------------------------------------------------------------------------------- |
-| detect   | Agent receives an error or empty result from a tool call                           |
-| diagnose | Agent identifies failure type: wrong DB, bad join key, missing field, data quality |
-| retry    | Agent reformulates the query with the fix applied                                  |
-| log      | Failure + fix written to kb/corrections/ for future sessions                       |
-
-This loop is the mechanism by which the agent improves without retraining.
+| Decision | Choice | Reason |
+|---|---|---|
+| Agent base | DAB built-in DataAgent | Faster to extend; all 4 DB types already supported |
+| KB injection | Monkey-patch `DataAgent.__init__` | No DAB scaffold modification needed |
+| LLM | gemini-2.5-flash (initial) | Available API key; will upgrade if tool calls fail |
+| PostgreSQL | Docker container `postgres-dab` | System-level install broken on EC2 |
 
 ---
 
-## 6. Key Decisions
+## 6. Definition of Done — April 9
 
-| Decision              | Choice                                         | Reason                                                      |
-| --------------------- | ---------------------------------------------- | ----------------------------------------------------------- |
-| LLM provider          | Gemini (gemini-3.1-pro-preview)                | Best available model, confirmed working with DAB built-in agent |
-| PostgreSQL deployment | Docker container with --restart unless-stopped | System-level install broken; Docker is reliable fallback    |
-| Agent base            | DAB built-in DataAgent                         | Faster to extend than build from scratch                    |
-| Pass@1 target         | 30% Sprint 1, improve by Sprint 2              | Beats GPT-5-mini baseline (30%); realistic given current 0% |
-
----
-
-## 7. Definition of Done
-
-### Interim Milestone — April 14
-
-- [x] Agent running on server, handling minimum 2 database types (MongoDB + DuckDB confirmed)
-- [x] Basic natural language to query working (Yelp Q1-Q7 running via OpenRouter)
-- [x] KB v1 and KB v2 committed with injection test results (all 7 docs PASS)
-- [x] Evaluation harness producing baseline score with query trace (0% → 28.6% → 57.1%)
-- [x] GitHub repo has all required folders with content
-- [x] Signal Corps has minimum 3 posts live with links in engagement_log.md
-- [ ] PostgreSQL Docker container running with --restart unless-stopped
-
-### Final Milestone — April 18
-
-- [ ] Agent handling all 4 database types
-- [ ] Self-correction demonstrated — failure + diagnosis + recovery logged in kb/corrections/
-- [ ] KB v2 domain documents complete and injection-tested (all 6 sections)
-- [ ] 15+ adversarial probes documented with fixes applied in probes/probes.md
-- [ ] Score improvement shown from baseline to final (target: 30% pass@1)
-- [ ] GitHub PR submitted to ucbepic/DataAgentBench
-- [ ] Demo video live (max 8 minutes, no login required)
+- [x] EC2 server accessible via `ssh trp-bloom`
+- [x] DataAgentBench repo cloned, venv created, dependencies installed
+- [x] MongoDB loaded with Yelp dataset (100 business docs confirmed)
+- [x] DuckDB Yelp file accessible
+- [x] `oracle_run.py` and `kb_injector.py` deployed on server
+- [x] KB v1 architecture: 4 documents committed and injection-tested (all PASS)
+- [x] KB v2 domain: 3 documents committed and injection-tested (all PASS)
+- [x] First agent run attempted on Yelp Q1 — result logged
 
 ---
 
-## 8. Mob Session Approval Record
+## 7. Mob Session Approval Record
 
-| Date       | Approved by   | Role                 | Hardest question asked                                                            | Answer                                                                |
-| ---------- | ------------- | -------------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| 2026-04-09 | Nebiyou Abebe | Intelligence Officer | Have we confirmed the join keys and formats in KB, or are we assuming they match? | We have confirmed them through actual agent failures, not assumption. |
+| Date | Approved by | Role | Hardest question asked | Answer |
+|---|---|---|---|---|
+| 2026-04-09 | Nebiyou Abebe | Intelligence Officer | Have we confirmed the join keys and formats in KB, or are we assuming they match? | Confirmed through actual agent failures. Agent failed Q1, Q2, Q4, Q7. Inspected tool call logs, confirmed `businessid_` vs `businessref_` mismatch. Added resolution pattern to hints — queries started passing. Gap: only confirmed for Yelp. |
+| 2026-04-09 | Ruth Solomon | Intelligence Officer | Does the agent correctly route queries requiring both PostgreSQL and MongoDB? | Not yet tested — honest gap. Yelp uses MongoDB + DuckDB only. |
+| 2026-04-09 | Abdurahim Miftah | Signal Corps | What changes are needed to support a second dataset? | Hints file + KB domain doc per dataset. Agent code does not change. |
+| 2026-04-09 | Efrata Wolde | Signal Corps | If Gemini API goes down during final submission, what is our fallback? | No fallback yet. Action: add OpenRouter backup key before final run. |
 
-Here's the evidence:
-The agent failed Q1, Q2, Q4, Q7 with wrong answers or TypeErrors
-We inspected the tool call logs and saw the agent trying to join on raw business_id and business_ref without resolving the prefix difference
-We then queried the actual MongoDB and DuckDB data and confirmed:
-MongoDB: businessid_1, businessid_2...
-DuckDB: businessref_1, businessref_2...
-We added the resolution pattern to the hints file and the queries started passing
-So yes — confirmed by failure and fix, not assumption
-However — this is only confirmed for the Yelp dataset. For other datasets like bookreview, crmarenapro, googlelocal we have not confirmed the join key formats yet. That's a gap.
-|
-| 2026-04-09 | Ruth Solomon | Intelligence Officer | Does the agent correctly identify and route queries that require data from both PostgreSQL and MongoDB in a single request? | Not yet tested — this is an honest gap.
-Our current testing has only covered Yelp, which uses MongoDB + DuckDB. We have not run any dataset that requires PostgreSQL + MongoDB in the same query
-
-The agent's routing is handled by DAB's QueryDBTool which reads db_config.yaml per dataset. It should work in theory — but we haven't proven it with a passing query yet. |
-| 2026-04-09 | Abdurahim Miftah | Signal Corps | What changes do we need to make to our current Yelp-based agent architecture to support querying and combining data from a second database? | Our agent already handles multiple databases within one dataset — Yelp uses both MongoDB and DuckDB simultaneously. So the multi-DB capability exists.
-
-To support a new dataset, we need three things:
-
-Hints file — each dataset needs its own db_description_withhint.txt with its specific join key patterns and schema quirks
-
-KB domain doc — Intelligence Officers add a schema document for the new dataset to kb/domain/
-
-Run the agent — python run_agent.py --dataset bookreview just works, no code changes needed
-
-The agent code, harness, and Docker setup don't change. The only work is dataset-specific knowledge — which is exactly what the KB is for.
-
-Honest gap: The KB isn't being injected into the agent yet. Right now only the hints file is read.
-|
-| 2026-04-09 | Efrata Wolde | Signal Corps | If Gemini API goes down during final submission, what is our fallback? | We don't have one yet. We will add a backup API key (OpenAI or Anthropic) to .env before the final submission run. |
-| 2026-04-13 | Amir Ahmedin | Driver | Our score is 57% on Yelp. What do we think our real pass@1 will be across all 54 queries? | Honestly lower — maybe 20-30%. Yelp is one dataset and we have tuned hints for it. Other datasets need their own hints and KB docs. The 57% proves the approach works. Week 9 is about scaling it to all 12 datasets. |
-
-**Status:** ✅ APPROVED — All team members approved on 2026-04-13. Construction phase begins.
+**Status:** ✅ APPROVED — Construction begins.
 
 ---
 
-> ✅ CONSTRUCTION APPROVED BY FULL TEAM ON 2026-04-13
+## 8. What Actually Happened
+
+- gemini-2.5-flash produced `MALFORMED_FUNCTION_CALL` errors and made no tool calls on any query
+- Score: 0/7 = 0% — all queries failed with `no_tool_call` or `max_iterations`
+- KB injection confirmed working: `[Oracle Forge] KB injected: 16044 chars`
+- Decision logged: upgrade to gemini-3.1-pro-preview in Sprint 2
 
 ---
 
-_AI-DLC Phase: CONSTRUCTION | Inception approved: 2026-04-13_
+_AI-DLC Phase: CONSTRUCTION COMPLETE | Date: 2026-04-09_
