@@ -274,7 +274,7 @@ def diagnose_failure(dataset: str, query_id: int, answer: str,
         "what_was_wrong": (
             f"{dataset} Q{query_id}: agent returned an answer that did not pass validation. "
             f"Terminate reason: {terminate_reason}. "
-            "The failure category could not be automatically classified."
+            "The failure category could not be automatically classified from tool call logs."
         ),
         "correct_approach": (
             "Inspect the tool_calls.jsonl log for this query to identify which step "
@@ -369,7 +369,8 @@ def run_harness(dataset: str, query_ids: list[int], llm: str, iterations: int = 
         print(f"  Q{qid}: {status} | {terminate} | calls={llm_calls} | {reason}")
 
         # Live self-correction: diagnose and write correction for every failure
-        if not is_valid:
+        # Skip if failure was due to API error (not an agent reasoning failure)
+        if not is_valid and terminate not in ('llm_response_failed',):
             diagnosis = diagnose_failure(dataset, qid, answer, terminate, reason)
             write_correction(dataset, qid, diagnosis)
 
