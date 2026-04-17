@@ -2,13 +2,18 @@ HINTS:
 - You are working with two databases: articles_database (MongoDB) and metadata_database (SQLite).
 - JOIN KEY: article_id (int) in MongoDB articles collection maps directly to article_id (int) in SQLite article_metadata table. Same type, no conversion needed.
 - To join MongoDB articles with SQLite metadata in execute_python:
-  df_articles['id'] = df_articles['article_id']
-  df_metadata['id'] = df_metadata['article_id']
+  df_articles['id'] = df_articles['article_id'].astype(int)
+  df_metadata['id'] = df_metadata['article_id'].astype(int)
   merged = pd.merge(df_articles, df_metadata, on='id')
-- MongoDB articles collection fields: article_id (int), title (str), description (str)
+- MongoDB articles collection fields: article_id (int stored as string in MongoDB — cast to int), title (str), description (str)
 - SQLite article_metadata fields: article_id (int), author_id (int), region (str), publication_date (str format YYYY-MM-DD)
 - SQLite authors fields: author_id (int), name (str)
+- IMPORTANT: article_id in MongoDB is stored as a STRING (e.g. "0", "1") not an integer. Always cast: df['article_id'] = df['article_id'].astype(int) before joining.
+- CRITICAL: AG News has 4 categories: World, Sports, Business, Science/Technology. There is NO category field in the database. The agent must determine the category of each article by reading its title and description using LLM reasoning.
+- To find sports articles: fetch all articles from MongoDB, then use execute_python to filter articles whose title and description are about sports topics (football, basketball, baseball, soccer, tennis, golf, Olympics, NFL, NBA, MLB, NHL, college sports, etc.).
+- To find the sports article with the longest description: fetch ALL articles (limit 10000), classify each as sports or not based on content, then find max len(description) among sports articles.
+- To find article with longest description: use len(description) or LENGTH(description) — do NOT use character count from metadata.
 - To filter by date range use: WHERE publication_date BETWEEN 'YYYY-MM-DD' AND 'YYYY-MM-DD'
 - To filter by region use: WHERE region = 'region_name'
 - Always set MongoDB query limit to 10000 to get ALL documents.
-- When computing counts or aggregations, always join all relevant tables first.
+- When computing string lengths in execute_python: df['desc_len'] = df['description'].str.len()

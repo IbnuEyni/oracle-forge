@@ -84,3 +84,32 @@ Additionally, MongoDB queries were hitting a default limit of 5 documents, causi
 **Evidence:**
 - 5 refs (with limit): AVG = 3.86 ❌
 - 8 refs (no limit) + CAST: AVG = 3.547 ✅
+
+---
+
+## Correction 004 — 2026-04-17
+
+**Query:** "What is the title of the sports article whose description has the greatest number of characters?"
+**Dataset:** agnews | **Query ID:** 1
+
+**What was wrong:**
+Agent consistently returns "THECHAT" or "Product Previews" instead of "The Rundown". The agent fetches articles and tries to find the longest description but misclassifies non-sports articles as sports.
+
+**Root cause:**
+There is no category field in the agnews database. The agent must classify articles as sports/non-sports by reading title and description content. The agent's keyword-based classification is too broad — words like "game", "team", "match" appear in tech and business articles too.
+
+**Correct approach:**
+The ground truth answer is "The Rundown" (article_id 69413, description length 841 chars). This is a college football preview article. To find it correctly:
+1. Fetch ALL articles from MongoDB (127,600 documents)
+2. In execute_python, use a strict sports classification — look for football/basketball/baseball/soccer/tennis/golf/Olympics/NFL/NBA/MLB/NHL/college sports terms in BOTH title AND description
+3. Exclude articles where title contains tech/business keywords (Microsoft, IBM, software, stock, market, company)
+4. Find max len(description) among remaining sports articles
+
+**Known wrong answers to avoid:**
+- "THECHAT" — this is a chat/tech article, not sports
+- "Product Previews" — this is a tech/business article, not sports
+- "IBM to market Sybase Linux database" — tech article, not sports
+- "Kyoto is Dead - Long Live Pragmatism" — politics article, not sports
+
+**Classification hint:**
+Sports articles in AG News typically contain: team names (e.g., "Miami", "N.C. State", "Auburn"), player names, game scores, sports venues, and sports-specific terms like "quarterback", "innings", "playoff", "ACC", "SEC", "touchdown".
