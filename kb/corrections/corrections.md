@@ -113,3 +113,44 @@ The ground truth answer is "The Rundown" (article_id 69413, description length 8
 
 **Classification hint:**
 Sports articles in AG News typically contain: team names (e.g., "Miami", "N.C. State", "Auburn"), player names, game scores, sports venues, and sports-specific terms like "quarterback", "innings", "playoff", "ACC", "SEC", "touchdown".
+
+---
+
+## Correction 005 — 2026-04-17 [AUTO]
+
+**Dataset:** bookreview | **Query ID:** 1
+**Failure pattern:** KeyError — wrong field name used
+
+**What was wrong:**
+bookreview Q1: agent hit max_iterations. execute_python failed with KeyError — agent referenced a field that does not exist in the result.
+
+**Correct approach:**
+Always call list_db first to inspect available fields. Print df.columns after creating the DataFrame to verify field names. Field names differ between databases — check db_description for exact names.
+
+**Example:**
+```
+import pandas as pd
+df = pd.DataFrame(records)
+print(df.columns.tolist())  # inspect before accessing
+```
+
+---
+
+## Correction 006 — 2026-04-17 [AUTO]
+
+**Dataset:** bookreview | **Query ID:** 3
+**Failure pattern:** Required entity name missing from answer
+
+**What was wrong:**
+bookreview Q3: agent returned an answer but a required entity name or identifier was absent — likely queried the wrong field or database.
+
+**Correct approach:**
+Verify which database and field holds the entity name for this dataset. Use list_db to inspect available collections and tables before querying. For Yelp: business names are in MongoDB business collection 'name' field. For bookreview: book titles are in PostgreSQL books_info 'title' field.
+
+**Example:**
+```
+# Always verify field existence before selecting
+import pandas as pd
+df = pd.DataFrame(records)
+print(df.columns.tolist())  # confirm 'name' or 'title' field exists
+```
