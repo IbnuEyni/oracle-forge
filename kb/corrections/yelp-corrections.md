@@ -2,40 +2,35 @@
 
 ## Purpose
 
-This document logs query failures from the Yelp dataset runs so the agent does not repeat the same mistakes. Each entry describes what went wrong, why, and what the agent should do differently.
+This document logs structural query failure patterns from Yelp dataset runs so the agent does not repeat the same mistakes. Each entry describes the failure mechanism and the correction approach. **No ground truth values, no expected answers, and no correct/incorrect numeric outputs are recorded here.** Data leakage into this file would invalidate benchmark results.
 
-**RULE:** Before running a Yelp query, check this log for known failure patterns. If the query matches a previous failure, apply the correction before executing.
+**RULE:** Before running a Yelp query, check this log for known failure patterns. If the query matches a pattern, apply the correction before executing.
 
 ## Query Corrections
 
-### Q1: Wrong average rating (3.86 vs expected 3.55)
+### Pattern A: Average computed from pre-aggregated field
 
-**Error:** Agent returned incorrect average rating.
-**Root cause:** Agent used MongoDB `business.stars` (pre-aggregated average) instead of calculating the average from individual review records in DuckDB `review.stars`. Both columns are valid schema fields, but `business.stars` is a summary while `review.stars` has per-review ratings.
+**Failure mechanism:** Agent used MongoDB `business.stars` (pre-aggregated average) instead of calculating the average from individual review records in DuckDB `review.stars`. Both columns are valid schema fields, but `business.stars` is a summary while `review.stars` has per-review ratings.
 **Correction:** When a query asks for an average calculated from reviews, aggregate from DuckDB `review.stars`. Use MongoDB `business.stars` only when the query explicitly asks for the business-level rating.
 
-### Q2: Wrong state (MO vs expected PA)
+### Pattern B: Counting from summary field instead of actual records
 
-**Error:** Agent returned Missouri instead of Pennsylvania.
-**Root cause:** Agent counted the `review_count` summary field in MongoDB instead of counting actual review records in DuckDB. Also, state info was extracted from the `description` field using string parsing, not a dedicated `state` column.
+**Failure mechanism:** Agent counted the `review_count` summary field in MongoDB instead of counting actual review records in DuckDB. State info must be extracted from the `description` field using string parsing, not a dedicated `state` column.
 **Correction:** Count actual records in DuckDB `review` table. Extract state with: `df['state'] = df['description'].str.extract(r',\s*([A-Z]{2})')`.
 
-### Q2 (later runs): Answer format rejected
+### Pattern C: Answer format rejected by validator
 
-**Error:** Answer was technically correct but validator rejected it.
-**Root cause:** The state abbreviation (PA) was more than 50 characters away from the number in the response string.
-**Correction:** Keep answer values close together. Format: "PA with 4,523 reviews" not a long explanation with values separated by paragraphs.
+**Failure mechanism:** Answer was structurally correct but the validator rejected it because values were spread too far apart in the response string.
+**Correction:** Keep answer values close together -- within 50 characters. Avoid long explanatory paragraphs separating the number from the label.
 
-### Q4: Wrong average (3.57 vs expected 3.633)
+### Pattern D: Filter applied after aggregation
 
-**Error:** Agent returned incorrect average for credit-card-accepting businesses.
-**Root cause:** Agent averaged all businesses instead of filtering to credit-card-accepting ones first.
-**Correction:** Apply filters BEFORE aggregation. Check the `attributes` field in MongoDB for `BusinessAcceptsCreditCards: True` before joining to DuckDB for rating calculation.
+**Failure mechanism:** Agent averaged across the full population instead of filtering to the subset specified in the query before aggregating.
+**Correction:** Apply filters BEFORE aggregation. Check the `attributes` field in MongoDB for the relevant boolean conditions before joining to DuckDB for rating calculation.
 
-### Q1, Q2, Q4, Q7: Wrong join key
+### Pattern E: Join key prefix mismatch
 
-**Error:** Agent joins DuckDB review table with MongoDB business collection using wrong key format.
-**Root cause:** DuckDB uses `business_ref` (e.g. `businessref_9`), MongoDB uses `business_id` (e.g. `businessid_9`). Agent attempted direct join without resolving the prefix difference.
+**Failure mechanism:** Agent joins DuckDB `review` table with MongoDB `business` collection using raw key format. DuckDB uses `business_ref` (e.g. `businessref_N`), MongoDB uses `business_id` (e.g. `businessid_N`). Direct join without resolving the prefix difference returns zero rows.
 **Correction:** Strip prefixes before joining:
 ```python
 df_reviews['id'] = df_reviews['business_ref'].str.replace('businessref_', '').astype(int)
@@ -43,14 +38,14 @@ df_business['id'] = df_business['business_id'].str.replace('businessid_', '').as
 merged = pd.merge(df_reviews, df_business, on='id')
 ```
 
-## Key Patterns
+## Key Patterns Summary
 
-| Pattern | Frequency | Fix |
-|---|---|---|
-| Used pre-aggregated field instead of raw records | Q1, Q2 | Aggregate from DuckDB review table, not MongoDB summary fields |
-| Filter applied after aggregation | Q4 | Apply WHERE/filter before GROUP BY |
-| Join key prefix mismatch | Q1, Q2, Q4, Q7 | Strip `businessid_`/`businessref_` prefixes, join on integer |
-| Answer format too spread out | Q2 | Keep values within 50 chars of each other |
+| Pattern | Fix |
+|---|---|
+| Used pre-aggregated field instead of raw records | Aggregate from DuckDB review table, not MongoDB summary fields |
+| Filter applied after aggregation | Apply WHERE/filter before GROUP BY |
+| Join key prefix mismatch | Strip `businessid_`/`businessref_` prefixes, join on integer |
+| Answer format too spread out | Keep values within 50 chars of each other |
 
 ## Yelp-Specific Rules
 
@@ -67,7 +62,25 @@ merged = pd.merge(df_reviews, df_business, on='id')
 
 These are not agent reasoning corrections but infrastructure/tooling issues observed during runs.
 
-- **Q5:** Non-deterministic results -- same query passes/fails across runs. LLM limitation, no KB fix. Consider temperature=0.
-- **Q7:** `TypeError: expected str not list` -- agent passed list where file path expected. Code-level fix in result handling.
+- **Non-deterministic queries:** same query passes/fails across runs. LLM limitation, no KB fix. Consider temperature=0.
+- **TypeError on path reading:** agent passed list where file path expected. Code-level fix in result handling.
 - **gemini-2.5-flash:** Produces no tool calls. Too weak for this task. Use gemini-2.0-flash minimum.
 - **Rate limiting:** 250 requests/day quota on Gemini free tier. Plan evaluation runs accordingly.
+
+---
+
+## Data Leakage Policy
+
+**This file must never contain:**
+- Ground truth answer values (numeric, categorical, or textual)
+- Query IDs mapped to specific expected outputs
+- Validator output or comparison results
+- "Correct" vs "wrong" values for any query
+
+**This file may contain:**
+- Structural failure patterns (what went wrong mechanically)
+- Correction approaches (how to reason through it)
+- Schema references (which table is authoritative for what)
+- Normalization patterns (prefix stripping, type casting)
+
+If a correction is written after a run, audit it before committing: does it reference any specific answer value? If yes, rewrite it to describe the pattern without the value.

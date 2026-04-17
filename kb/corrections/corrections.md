@@ -64,23 +64,38 @@ Fix: always check type before passing to open() — use json.dumps() if result i
 
 ## Correction 003 — 2026-04-15
 
-**Queries affected:** Q1, Q2, Q4, Q5 (Yelp dataset) — any query computing AVG(rating)
+**Queries affected:** Yelp queries that compute averages over review ratings or rely on large MongoDB result sets
 
 **What was wrong:**
-The `rating` column in DuckDB `review` table is stored as `BIGINT`. Using `AVG(rating)` directly on a BIGINT column returns an integer-truncated result. For example, Q1 returned `3.86` instead of `3.547` because the average was computed incorrectly.
-
-Additionally, MongoDB queries were hitting a default limit of 5 documents, causing the agent to miss 3 of 8 Indianapolis businesses.
+The `rating` column in DuckDB `review` table is stored as `BIGINT`. Using `AVG(rating)` directly on a BIGINT column loses decimal precision. In the same failure mode, MongoDB queries were using a small default document limit, so the agent sometimes averaged an incomplete subset of businesses.
 
 **Correct approach:**
 1. Always use `CAST(rating AS FLOAT)` or `CAST(rating AS DOUBLE)` when computing averages:
    ```sql
    SELECT AVG(CAST(rating AS FLOAT)) FROM review WHERE business_ref IN (...)
    ```
-2. Always set MongoDB query limit to 0 or 10000 to get ALL matching documents:
+2. Always set MongoDB query limit high enough to return all matching documents:
    ```json
    {"collection": "business", "filter": {...}, "limit": 10000}
    ```
 
 **Evidence:**
-- 5 refs (with limit): AVG = 3.86 ❌
-- 8 refs (no limit) + CAST: AVG = 3.547 ✅
+- Precision is preserved only after casting the rating column.
+- Full document retrieval requires overriding the small default MongoDB limit.
+
+---
+
+## Data Leakage Policy
+
+**This file must never contain:**
+- Ground truth answer values, expected answers, or validator outputs
+- Query IDs mapped to specific expected outputs
+- "Correct" vs "wrong" values for any query
+
+**This file may contain:**
+- Structural failure patterns
+- Correction approaches
+- Schema references
+- Normalization patterns and safe configuration rules
+
+If a correction would mention a specific answer value, rewrite it to describe the failure mechanism instead.
