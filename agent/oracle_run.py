@@ -25,7 +25,8 @@ sys.path.insert(0, '{AGENT_DIR}')
 sys.path.insert(0, '{DAB_PATH}')
 import kb_injector
 os.chdir('{DAB_PATH}')
-exec(open('{DAB_PATH}/run_agent.py').read())
+globals()['__file__'] = '{DAB_PATH}/run_agent.py'
+exec(open('{DAB_PATH}/run_agent.py').read(), {{'__file__': '{DAB_PATH}/run_agent.py', '__name__': '__main__'}})
 """
 
 result = subprocess.run(
