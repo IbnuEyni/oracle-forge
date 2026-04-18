@@ -16,8 +16,6 @@ existing_path = env.get("PYTHONPATH", "")
 env["PYTHONPATH"] = f"{AGENT_DIR}:{DAB_PATH}:{existing_path}"
 env["ORACLE_FORGE_KB_INJECT"] = "1"
 
-# Run DAB agent with KB injection via sitecustomize trick
-# We use -c to run a small bootstrap that imports kb_injector first
 bootstrap = f"""
 import sys
 import os

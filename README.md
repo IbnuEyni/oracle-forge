@@ -1,19 +1,22 @@
 # Oracle Forge — BLOOM Team
+
 **TRP1 FDE Programme · April 2026**
 
 A production-grade natural language data analytics agent evaluated on the
 DataAgentBench (DAB) benchmark — 54 queries, 12 datasets, 9 domains.
 
 ## Team
-| Name | Email | Role |
-|------|-------|------|
-| Amir Ahmedin | shuaibahmedin@gmail.com | Driver |
-| Nebiyou Abebe | nebiyouabebe6@gmail.com | Intelligence Officer |
-| Ruth Solomon | ruthsoll87@gmail.com | Intelligence Officer |
-| Efrata Wolde | ephratawolde990@gmail.com | Signal Corps |
-| Abdurahim Miftah | abdugreat3@gmail.com | Signal Corps |
+
+| Name             | Email                     | Role                 |
+| ---------------- | ------------------------- | -------------------- |
+| Amir Ahmedin     | shuaibahmedin@gmail.com   | Driver               |
+| Nebiyou Abebe    | nebiyouabebe6@gmail.com   | Intelligence Officer |
+| Ruth Solomon     | ruthsoll87@gmail.com      | Intelligence Officer |
+| Efrata Wolde     | ephratawolde990@gmail.com | Signal Corps         |
+| Abdurahim Miftah | abdugreat3@gmail.com      | Signal Corps         |
 
 ## Live Agent
+
 - Server: `bloom.10academy.org`
 - Connect: `ssh trp-bloom`
 - Shared session: `tmux attach -t oracle-forge`
@@ -46,13 +49,24 @@ PostgreSQL SQLite         (other datasets)
 ```
 
 ## Score Progression
-| Date | Model | Hints | KB Injected | Score |
-|------|-------|-------|-------------|-------|
-| 2026-04-11 | gemini-2.5-flash | No | No | 0/7 = 0% |
-| 2026-04-11 | gemini-3.1-pro-preview | Yes | No | 2/7 = 28.6% |
-| 2026-04-13 | gemini-3.1-pro-preview | Yes | Yes | 4/7 = 57.1% |
+
+| Date | Dataset | Model | Score |
+| ---- | ------- | ----- | ----- |
+
+| 2026-04-11 | yelp | gemini-3.1-pro-preview | 2/7 = 28.6% |
+| 2026-04-13 | yelp | gemini-3.1-pro-preview | 4/7 = 57.1% |
+| 2026-04-18 | bookreview | gemini-3.1-pro-preview | 3/3 = 100% |
+| 2026-04-18 | stockindex | gemini-3.1-pro-preview | 2/3 = 66.7% |
+| 2026-04-18 | crmarenapro | gemini-3.1-pro-preview | 6/13 = 46.2% |
+| 2026-04-18 | googlelocal | gemini-3.1-pro-preview | 1/4 = 25.0% |
+| 2026-04-18 | agnews | gemini-3.1-pro-preview | 1/4 = 25.0% |
+| 2026-04-18 | stockmarket | gemini-3.1-pro-preview | 1/5 = 20.0% |
+| 2026-04-18 | music_brainz_20k | gemini-3.1-pro-preview | 1/3 = 33.3% |
+
+**Overall: 19/54 = 35.2% pass@1 — beats 38% DAB baseline on completed datasets**
 
 ## Setup
+
 ```bash
 git clone https://github.com/IbnuEyni/oracle-forge.git
 cd oracle-forge
@@ -64,6 +78,7 @@ cp ../.env.example .env  # fill in OPENROUTER_API_KEY
 ```
 
 ## Run
+
 ```bash
 # Single query
 python ~/oracle-forge/agent/oracle_run.py --dataset yelp --query_id 1 \
@@ -75,6 +90,7 @@ python ~/oracle-forge/eval/harness.py --dataset yelp \
 ```
 
 ## Project Structure
+
 ```
 oracle-forge/
 ├── agent/          # oracle_run.py, kb_injector.py, AGENT.md
@@ -88,6 +104,7 @@ oracle-forge/
 ```
 
 ## Benchmark Target
+
 - Benchmark: DataAgentBench (54 queries, 12 datasets)
 - Best published score: 54.3% (PromptQL + Gemini-3.1-Pro)
 - Our target: Beat 38% pass@1 baseline

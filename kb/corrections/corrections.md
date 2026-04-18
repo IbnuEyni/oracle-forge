@@ -1,5 +1,6 @@
 # Corrections Log
-*Written by Driver after every observed agent failure. Read by agent at session start.*
+
+_Written by Driver after every observed agent failure. Read by agent at session start._
 
 ---
 
@@ -12,12 +13,14 @@
 Agent successfully retrieved MongoDB business data but then failed 9 times generating Python code to process it. Errors: `TypeError: list indices must be integers` and `SyntaxError: unterminated string`. The agent was treating the JSON result as a nested list and using integer indices instead of dictionary key access.
 
 **Correct approach:**
+
 - MongoDB query results are returned as a list of dictionaries
 - Access fields with `record['field_name']` not `record[0]`
 - When processing MongoDB results in execute_python, always use `pd.DataFrame(records)` first, then operate on the DataFrame
 - State information in the Yelp dataset is extracted from the `description` field in the business collection using string parsing, not a dedicated `state` field
 
 **Example correct code pattern:**
+
 ```python
 import pandas as pd
 # records is a list of dicts from MongoDB
@@ -36,17 +39,20 @@ df['state'] = df['description'].str.extract(r',\s*([A-Z]{2})')
 
 **What was wrong:**
 Agent joins DuckDB `review` table with MongoDB `business` collection using wrong key.
+
 - DuckDB `review` table uses `business_ref` field (e.g. `businessref_9`)
 - MongoDB `business` collection uses `business_id` field (e.g. `businessid_9`)
 - Agent attempts direct join without resolving the format difference → wrong results or TypeError
 
 **Correct approach:**
 Strip the prefix before joining:
+
 - `business_ref` → remove `businessref_` prefix → get integer ID
 - `business_id` → remove `businessid_` prefix → get integer ID
 - Then join on the integer ID
 
 **Example correct Python code:**
+
 ```python
 import pandas as pd
 # df_reviews from DuckDB, df_business from MongoDB
@@ -72,6 +78,7 @@ The `rating` column in DuckDB `review` table is stored as `BIGINT`. Using `AVG(r
 Additionally, MongoDB queries were hitting a default limit of 5 documents, causing the agent to miss businesses that should be included in the calculation.
 
 **Correct approach:**
+
 1. Always use `CAST(rating AS FLOAT)` or `CAST(rating AS DOUBLE)` when computing averages:
    ```sql
    SELECT AVG(CAST(rating AS FLOAT)) FROM review WHERE business_ref IN (...)
@@ -91,6 +98,7 @@ Additionally, MongoDB queries were hitting a default limit of 5 documents, causi
 Agent misclassifies non-sports articles as sports when searching for the longest description. There is no category field in the agnews database — the agent must classify articles by reading title and description content. Keyword-based classification is too broad — words like "game", "team", "match" appear in tech and business articles too.
 
 **Correct approach:**
+
 1. Fetch ALL articles from the database — do not filter before classification
 2. Use strict sports classification — require sports-specific terms in BOTH title AND description: football, basketball, baseball, soccer, tennis, golf, Olympics, NFL, NBA, MLB, NHL, playoff, quarterback, innings, touchdown, and specific league/conference names
 3. Exclude articles where the title contains clear non-sports signals: software, stock, market, company names, political terms
@@ -106,12 +114,14 @@ Agent misclassifies non-sports articles as sports when searching for the longest
 
 **What was wrong:**
 bookreview Q1: agent hit max_iterations cycling through four errors:
+
 - `NameError: name 'var_call' is not defined` — agent references a result variable that was never stored
 - `ValueError: DataFrame constructor not properly called` — agent passes wrong type to pd.DataFrame()
 - `TypeError: expected str, bytes or os.PathLike object, not list` — agent passes list to open()
 - `AttributeError: 'Series' object has no attribute 'value_collapse'` — agent calls non-existent pandas method
 
 **Correct approach:**
+
 - Always use the exact key name returned in the tool result message, not a guessed name like `var_call`
 - Check available keys with `print(list(env.keys()))` before referencing stored results
 - Always pass a list of dicts to `pd.DataFrame()`: `pd.DataFrame(records)` where records is the query result
@@ -119,6 +129,7 @@ bookreview Q1: agent hit max_iterations cycling through four errors:
 - When a stored result is a file path (string ending in .json), read it with `json.load(open(path))`
 
 **Example:**
+
 ```python
 import pandas as pd, json
 # Check what keys are available
@@ -148,6 +159,7 @@ bookreview Q3: agent returned an answer but a required entity name or identifier
 Verify which database and field holds the entity name for this dataset. Use list_db to inspect available collections and tables before querying. For Yelp: business names are in MongoDB business collection 'name' field. For bookreview: book titles are in PostgreSQL books_info 'title' field.
 
 **Example:**
+
 ```
 # Always verify field existence before selecting
 import pandas as pd
@@ -169,6 +181,7 @@ yelp Q2: agent returned an answer but a required entity name or identifier was a
 Verify which database and field holds the entity name for this dataset. Use list_db to inspect available collections and tables before querying. For Yelp: business names are in MongoDB business collection 'name' field. For bookreview: book titles are in PostgreSQL books_info 'title' field.
 
 **Example:**
+
 ```
 # Always verify field existence before selecting
 import pandas as pd
@@ -190,6 +203,7 @@ yelp Q3: agent returned a numeric answer but the value was computed incorrectly 
 Always CAST numeric columns to FLOAT before computing AVG in DuckDB: AVG(CAST(column AS FLOAT)). Always set MongoDB query limit to 10000 to avoid missing documents. Verify join key normalisation: strip prefixes before merging DataFrames.
 
 **Example:**
+
 ```
 -- DuckDB: cast before averaging
 SELECT AVG(CAST(rating AS FLOAT)) FROM review WHERE business_ref IN (...)
@@ -212,6 +226,7 @@ yelp Q4: agent returned an answer but the category field was sourced from the wr
 In Yelp, business categories are stored in the MongoDB business collection as a list in the 'categories' field — not in DuckDB. Explode the list before counting. Do not use DuckDB category fields — they may be stale or differently formatted.
 
 **Example:**
+
 ```
 import pandas as pd
 # MongoDB business categories field is a list
@@ -235,6 +250,7 @@ yelp Q5: agent hit max_iterations. execute_python failed repeatedly with NameErr
 Never use bare `nan` in execute_python. Use `float('nan')`, `pd.NA`, or `np.nan` (after importing numpy). Always add `import numpy as np` before using np.nan.
 
 **Example:**
+
 ```
 import numpy as np
 import pandas as pd
@@ -257,6 +273,7 @@ yelp Q7: agent hit max_iterations. execute_python failed with TypeError — agen
 Always wrap tool results in pd.DataFrame() before field access. Use df['field_name'] not result[0]. Check result type with type(result) before processing.
 
 **Example:**
+
 ```
 import pandas as pd
 # records is a list of dicts from query_db
@@ -280,19 +297,636 @@ Increase --iterations to 30. Add dataset-specific hints to db_description_withhi
 
 ---
 
-## Correction 013 — 2026-04-18
+## Correction 013 — 2026-04-18 [AUTO]
 
-**Dataset:** bookreview | **Query ID:** 2
-**Failure pattern:** ERROR — missing dataset directory on server
+**Dataset:** googlelocal | **Query ID:** 1
+**Failure pattern:** Required entity name missing from answer
 
 **What was wrong:**
-`[Errno 2] No such file or directory: 'query_bookreview/query'` — the bookreview dataset directory is not present on the server. The agent cannot find the query files to run.
+googlelocal Q1: agent returned an answer but a required entity name or identifier was absent — likely queried the wrong field or database.
 
 **Correct approach:**
-This is a server setup issue, not an agent logic issue. Before running bookreview queries, verify the dataset exists:
-```bash
-ls ~/DataAgentBench/query_bookreview/
-```
-If missing, the Driver must load the bookreview dataset onto the server before evaluation can proceed.
+Verify which database and field holds the entity name for this dataset. Use list_db to inspect available collections and tables before querying. For Yelp: business names are in MongoDB business collection 'name' field. For bookreview: book titles are in PostgreSQL books_info 'title' field.
 
-**Status:** Pending — requires Driver to load bookreview dataset on server.
+**Example:**
+
+```
+# Always verify field existence before selecting
+import pandas as pd
+df = pd.DataFrame(records)
+print(df.columns.tolist())  # confirm 'name' or 'title' field exists
+```
+
+---
+
+## Correction 014 — 2026-04-18 [AUTO]
+
+**Dataset:** googlelocal | **Query ID:** 2
+**Failure pattern:** Required entity name missing from answer
+
+**What was wrong:**
+googlelocal Q2: agent returned an answer but a required entity name or identifier was absent — likely queried the wrong field or database.
+
+**Correct approach:**
+Verify which database and field holds the entity name for this dataset. Use list_db to inspect available collections and tables before querying. For Yelp: business names are in MongoDB business collection 'name' field. For bookreview: book titles are in PostgreSQL books_info 'title' field.
+
+**Example:**
+
+```
+# Always verify field existence before selecting
+import pandas as pd
+df = pd.DataFrame(records)
+print(df.columns.tolist())  # confirm 'name' or 'title' field exists
+```
+
+---
+
+## Correction 015 — 2026-04-18 [AUTO]
+
+**Dataset:** googlelocal | **Query ID:** 3
+**Failure pattern:** Required entity name missing from answer
+
+**What was wrong:**
+googlelocal Q3: agent returned an answer but a required entity name or identifier was absent — likely queried the wrong field or database.
+
+**Correct approach:**
+Verify which database and field holds the entity name for this dataset. Use list_db to inspect available collections and tables before querying. For Yelp: business names are in MongoDB business collection 'name' field. For bookreview: book titles are in PostgreSQL books_info 'title' field.
+
+**Example:**
+
+```
+# Always verify field existence before selecting
+import pandas as pd
+df = pd.DataFrame(records)
+print(df.columns.tolist())  # confirm 'name' or 'title' field exists
+```
+
+---
+
+## Correction 016 — 2026-04-18 [AUTO]
+
+**Dataset:** agnews | **Query ID:** 1
+**Failure pattern:** Answer returned but failed validation
+
+**What was wrong:**
+agnews Q1: agent returned an answer that did not pass validation. Terminate reason: return_answer. The failure category could not be automatically classified from tool call logs.
+
+**Correct approach:**
+Inspect the tool_calls.jsonl log for this query to identify which step produced the incorrect intermediate result. Check join keys, field names, and database routing.
+
+---
+
+## Correction 017 — 2026-04-18 [AUTO]
+
+**Dataset:** agnews | **Query ID:** 2
+**Failure pattern:** Answer returned but failed validation
+
+**What was wrong:**
+agnews Q2: agent returned an answer that did not pass validation. Terminate reason: return_answer. The failure category could not be automatically classified from tool call logs.
+
+**Correct approach:**
+Inspect the tool_calls.jsonl log for this query to identify which step produced the incorrect intermediate result. Check join keys, field names, and database routing.
+
+---
+
+## Correction 018 — 2026-04-18 [AUTO]
+
+**Dataset:** agnews | **Query ID:** 3
+**Failure pattern:** NaN/NameError in execute_python
+
+**What was wrong:**
+agnews Q3: agent hit max_iterations. execute_python failed repeatedly with NameError — bare `nan` used instead of a valid null representation.
+
+**Correct approach:**
+Never use bare `nan` in execute_python. Use `float('nan')`, `pd.NA`, or `np.nan` (after importing numpy). Always add `import numpy as np` before using np.nan.
+
+**Example:**
+
+```
+import numpy as np
+import pandas as pd
+# correct null handling
+df = df.replace(float('nan'), np.nan)
+df = df.dropna(subset=['required_column'])
+```
+
+---
+
+## Correction 019 — 2026-04-18 [AUTO]
+
+**Dataset:** music_brainz_20k | **Query ID:** 1
+**Failure pattern:** Answer returned but failed validation
+
+**What was wrong:**
+music_brainz_20k Q1: agent returned an answer that did not pass validation. Terminate reason: return_answer. The failure category could not be automatically classified from tool call logs.
+
+**Correct approach:**
+Inspect the tool_calls.jsonl log for this query to identify which step produced the incorrect intermediate result. Check join keys, field names, and database routing.
+
+---
+
+## Correction 020 — 2026-04-18 [AUTO]
+
+**Dataset:** music_brainz_20k | **Query ID:** 3
+**Failure pattern:** Answer returned but failed validation
+
+**What was wrong:**
+music_brainz_20k Q3: agent returned an answer that did not pass validation. Terminate reason: return_answer. The failure category could not be automatically classified from tool call logs.
+
+**Correct approach:**
+Inspect the tool_calls.jsonl log for this query to identify which step produced the incorrect intermediate result. Check join keys, field names, and database routing.
+
+---
+
+## Correction 021 — 2026-04-18 [AUTO]
+
+**Dataset:** DEPS_DEV_V1 | **Query ID:** 2
+**Failure pattern:** KeyError — wrong field name used
+
+**What was wrong:**
+DEPS_DEV_V1 Q2: agent hit max_iterations. execute_python failed with KeyError — agent referenced a field that does not exist in the result.
+
+**Correct approach:**
+Always call list_db first to inspect available fields. Print df.columns after creating the DataFrame to verify field names. Field names differ between databases — check db_description for exact names.
+
+**Example:**
+
+```
+import pandas as pd
+df = pd.DataFrame(records)
+print(df.columns.tolist())  # inspect before accessing
+```
+
+---
+
+## Correction 022 — 2026-04-18 [AUTO]
+
+**Dataset:** GITHUB_REPOS | **Query ID:** 1
+**Failure pattern:** Incorrect numeric computation
+
+**What was wrong:**
+GITHUB_REPOS Q1: agent returned a numeric answer but the value was computed incorrectly — likely due to integer truncation or incomplete data.
+
+**Correct approach:**
+Always CAST numeric columns to FLOAT before computing AVG in DuckDB: AVG(CAST(column AS FLOAT)). Always set MongoDB query limit to 10000 to avoid missing documents. Verify join key normalisation: strip prefixes before merging DataFrames.
+
+**Example:**
+
+```
+-- DuckDB: cast before averaging
+SELECT AVG(CAST(rating AS FLOAT)) FROM review WHERE business_ref IN (...)
+
+-- MongoDB: always set explicit limit
+{"collection": "business", "filter": {}, "limit": 10000}
+```
+
+---
+
+## Correction 023 — 2026-04-18 [AUTO]
+
+**Dataset:** PANCANCER_ATLAS | **Query ID:** 1
+**Failure pattern:** Required entity name missing from answer
+
+**What was wrong:**
+PANCANCER_ATLAS Q1: agent returned an answer but a required entity name or identifier was absent — likely queried the wrong field or database.
+
+**Correct approach:**
+Verify which database and field holds the entity name for this dataset. Use list_db to inspect available collections and tables before querying. For Yelp: business names are in MongoDB business collection 'name' field. For bookreview: book titles are in PostgreSQL books_info 'title' field.
+
+**Example:**
+
+```
+# Always verify field existence before selecting
+import pandas as pd
+df = pd.DataFrame(records)
+print(df.columns.tolist())  # confirm 'name' or 'title' field exists
+```
+
+---
+
+## Correction 024 — 2026-04-18 [AUTO]
+
+**Dataset:** PATENTS | **Query ID:** 1
+**Failure pattern:** Required entity name missing from answer
+
+**What was wrong:**
+PATENTS Q1: agent returned an answer but a required entity name or identifier was absent — likely queried the wrong field or database.
+
+**Correct approach:**
+Verify which database and field holds the entity name for this dataset. Use list_db to inspect available collections and tables before querying. For Yelp: business names are in MongoDB business collection 'name' field. For bookreview: book titles are in PostgreSQL books_info 'title' field.
+
+**Example:**
+
+```
+# Always verify field existence before selecting
+import pandas as pd
+df = pd.DataFrame(records)
+print(df.columns.tolist())  # confirm 'name' or 'title' field exists
+```
+
+---
+
+## Correction 025 — 2026-04-18 [AUTO]
+
+**Dataset:** crmarenapro | **Query ID:** 1
+**Failure pattern:** Answer returned but failed validation
+
+**What was wrong:**
+crmarenapro Q1: agent returned an answer that did not pass validation. Terminate reason: llm_response_failed (APIStatusError): Error code: 402 - {'error': {'message': 'This request requires more credits, or fewer max_tokens. You requested up to 65536 tokens, but can only afford 31570. To increase, visit https://openrouter.ai/settings/keys and create a key with a higher weekly limit', 'code': 402, 'metadata': {'provider_name': None}}, 'user_id': 'org_3B7LqR6KG0MSzOr4fEskO8X8zKr'}. The failure category could not be automatically classified from tool call logs.
+
+**Correct approach:**
+Inspect the tool_calls.jsonl log for this query to identify which step produced the incorrect intermediate result. Check join keys, field names, and database routing.
+
+---
+
+## Correction 026 — 2026-04-18 [AUTO]
+
+**Dataset:** crmarenapro | **Query ID:** 2
+**Failure pattern:** Answer returned but failed validation
+
+**What was wrong:**
+crmarenapro Q2: agent returned an answer that did not pass validation. Terminate reason: llm_response_failed (APIStatusError): Error code: 402 - {'error': {'message': 'This request requires more credits, or fewer max_tokens. You requested up to 65536 tokens, but can only afford 31570. To increase, visit https://openrouter.ai/settings/keys and create a key with a higher weekly limit', 'code': 402, 'metadata': {'provider_name': None}}, 'user_id': 'org_3B7LqR6KG0MSzOr4fEskO8X8zKr'}. The failure category could not be automatically classified from tool call logs.
+
+**Correct approach:**
+Inspect the tool_calls.jsonl log for this query to identify which step produced the incorrect intermediate result. Check join keys, field names, and database routing.
+
+---
+
+## Correction 027 — 2026-04-18 [AUTO]
+
+**Dataset:** crmarenapro | **Query ID:** 3
+**Failure pattern:** Required entity name missing from answer
+
+**What was wrong:**
+crmarenapro Q3: agent returned an answer but a required entity name or identifier was absent — likely queried the wrong field or database.
+
+**Correct approach:**
+Verify which database and field holds the entity name for this dataset. Use list_db to inspect available collections and tables before querying. For Yelp: business names are in MongoDB business collection 'name' field. For bookreview: book titles are in PostgreSQL books_info 'title' field.
+
+**Example:**
+
+```
+# Always verify field existence before selecting
+import pandas as pd
+df = pd.DataFrame(records)
+print(df.columns.tolist())  # confirm 'name' or 'title' field exists
+```
+
+---
+
+## Correction 028 — 2026-04-18 [AUTO]
+
+**Dataset:** crmarenapro | **Query ID:** 4
+**Failure pattern:** Required entity name missing from answer
+
+**What was wrong:**
+crmarenapro Q4: agent returned an answer but a required entity name or identifier was absent — likely queried the wrong field or database.
+
+**Correct approach:**
+Verify which database and field holds the entity name for this dataset. Use list_db to inspect available collections and tables before querying. For Yelp: business names are in MongoDB business collection 'name' field. For bookreview: book titles are in PostgreSQL books_info 'title' field.
+
+**Example:**
+
+```
+# Always verify field existence before selecting
+import pandas as pd
+df = pd.DataFrame(records)
+print(df.columns.tolist())  # confirm 'name' or 'title' field exists
+```
+
+---
+
+## Correction 029 — 2026-04-18 [AUTO]
+
+**Dataset:** crmarenapro | **Query ID:** 7
+**Failure pattern:** NaN/NameError in execute_python
+
+**What was wrong:**
+crmarenapro Q7: agent hit max_iterations. execute_python failed repeatedly with NameError — bare `nan` used instead of a valid null representation.
+
+**Correct approach:**
+Never use bare `nan` in execute_python. Use `float('nan')`, `pd.NA`, or `np.nan` (after importing numpy). Always add `import numpy as np` before using np.nan.
+
+**Example:**
+
+```
+import numpy as np
+import pandas as pd
+# correct null handling
+df = df.replace(float('nan'), np.nan)
+df = df.dropna(subset=['required_column'])
+```
+
+---
+
+## Correction 030 — 2026-04-18 [AUTO]
+
+**Dataset:** crmarenapro | **Query ID:** 8
+**Failure pattern:** KeyError — wrong field name used
+
+**What was wrong:**
+crmarenapro Q8: agent hit max_iterations. execute_python failed with KeyError — agent referenced a field that does not exist in the result.
+
+**Correct approach:**
+Always call list_db first to inspect available fields. Print df.columns after creating the DataFrame to verify field names. Field names differ between databases — check db_description for exact names.
+
+**Example:**
+
+```
+import pandas as pd
+df = pd.DataFrame(records)
+print(df.columns.tolist())  # inspect before accessing
+```
+
+---
+
+## Correction 031 — 2026-04-18 [AUTO]
+
+**Dataset:** crmarenapro | **Query ID:** 10
+**Failure pattern:** Answer returned but failed validation
+
+**What was wrong:**
+crmarenapro Q10: agent returned an answer that did not pass validation. Terminate reason: llm_response_failed (APIStatusError): Error code: 402 - {'error': {'message': 'This request requires more credits, or fewer max_tokens. You requested up to 65536 tokens, but can only afford 51735. To increase, visit https://openrouter.ai/settings/keys and create a key with a higher weekly limit', 'code': 402, 'metadata': {'provider_name': None}}, 'user_id': 'org_3B7LqR6KG0MSzOr4fEskO8X8zKr'}. The failure category could not be automatically classified from tool call logs.
+
+**Correct approach:**
+Inspect the tool_calls.jsonl log for this query to identify which step produced the incorrect intermediate result. Check join keys, field names, and database routing.
+
+---
+
+## Correction 032 — 2026-04-18 [AUTO]
+
+**Dataset:** crmarenapro | **Query ID:** 12
+**Failure pattern:** Answer returned but failed validation
+
+**What was wrong:**
+crmarenapro Q12: agent returned an answer that did not pass validation. Terminate reason: return_answer. The failure category could not be automatically classified from tool call logs.
+
+**Correct approach:**
+Inspect the tool_calls.jsonl log for this query to identify which step produced the incorrect intermediate result. Check join keys, field names, and database routing.
+
+---
+
+## Correction 033 — 2026-04-18 [AUTO]
+
+**Dataset:** crmarenapro | **Query ID:** 13
+**Failure pattern:** NaN/NameError in execute_python
+
+**What was wrong:**
+crmarenapro Q13: agent hit max_iterations. execute_python failed repeatedly with NameError — bare `nan` used instead of a valid null representation.
+
+**Correct approach:**
+Never use bare `nan` in execute_python. Use `float('nan')`, `pd.NA`, or `np.nan` (after importing numpy). Always add `import numpy as np` before using np.nan.
+
+**Example:**
+
+```
+import numpy as np
+import pandas as pd
+# correct null handling
+df = df.replace(float('nan'), np.nan)
+df = df.dropna(subset=['required_column'])
+```
+
+---
+
+## Correction 034 — 2026-04-18 [AUTO]
+
+**Dataset:** stockindex | **Query ID:** 3
+**Failure pattern:** Required entity name missing from answer
+
+**What was wrong:**
+stockindex Q3: agent returned an answer but a required entity name or identifier was absent — likely queried the wrong field or database.
+
+**Correct approach:**
+Verify which database and field holds the entity name for this dataset. Use list_db to inspect available collections and tables before querying. For Yelp: business names are in MongoDB business collection 'name' field. For bookreview: book titles are in PostgreSQL books_info 'title' field.
+
+**Example:**
+
+```
+# Always verify field existence before selecting
+import pandas as pd
+df = pd.DataFrame(records)
+print(df.columns.tolist())  # confirm 'name' or 'title' field exists
+```
+
+---
+
+## Correction 035 — 2026-04-18 [AUTO]
+
+**Dataset:** stockmarket | **Query ID:** 2
+**Failure pattern:** TypeError — integer index used on dict result
+
+**What was wrong:**
+stockmarket Q2: agent hit max_iterations. execute_python failed with TypeError — agent accessed a list-of-dicts result using integer indices instead of field names.
+
+**Correct approach:**
+Always wrap tool results in pd.DataFrame() before field access. Use df['field_name'] not result[0]. Check result type with type(result) before processing.
+
+**Example:**
+
+```
+import pandas as pd
+# records is a list of dicts from query_db
+df = pd.DataFrame(records)
+# now access fields by name
+value = df['field_name']
+```
+
+---
+
+## Correction 036 — 2026-04-18 [AUTO]
+
+**Dataset:** stockmarket | **Query ID:** 3
+**Failure pattern:** Incorrect numeric computation
+
+**What was wrong:**
+stockmarket Q3: agent returned a numeric answer but the value was computed incorrectly — likely due to integer truncation or incomplete data.
+
+**Correct approach:**
+Always CAST numeric columns to FLOAT before computing AVG in DuckDB: AVG(CAST(column AS FLOAT)). Always set MongoDB query limit to 10000 to avoid missing documents. Verify join key normalisation: strip prefixes before merging DataFrames.
+
+**Example:**
+
+```
+-- DuckDB: cast before averaging
+SELECT AVG(CAST(rating AS FLOAT)) FROM review WHERE business_ref IN (...)
+
+-- MongoDB: always set explicit limit
+{"collection": "business", "filter": {}, "limit": 10000}
+```
+
+---
+
+## Correction 037 — 2026-04-18 [AUTO]
+
+**Dataset:** stockmarket | **Query ID:** 4
+**Failure pattern:** TypeError — integer index used on dict result
+
+**What was wrong:**
+stockmarket Q4: agent hit max_iterations. execute_python failed with TypeError — agent accessed a list-of-dicts result using integer indices instead of field names.
+
+**Correct approach:**
+Always wrap tool results in pd.DataFrame() before field access. Use df['field_name'] not result[0]. Check result type with type(result) before processing.
+
+**Example:**
+
+```
+import pandas as pd
+# records is a list of dicts from query_db
+df = pd.DataFrame(records)
+# now access fields by name
+value = df['field_name']
+```
+
+---
+
+## Correction 038 — 2026-04-18 [AUTO]
+
+**Dataset:** stockmarket | **Query ID:** 5
+**Failure pattern:** TypeError — integer index used on dict result
+
+**What was wrong:**
+stockmarket Q5: agent hit max_iterations. execute_python failed with TypeError — agent accessed a list-of-dicts result using integer indices instead of field names.
+
+**Correct approach:**
+Always wrap tool results in pd.DataFrame() before field access. Use df['field_name'] not result[0]. Check result type with type(result) before processing.
+
+**Example:**
+
+```
+import pandas as pd
+# records is a list of dicts from query_db
+df = pd.DataFrame(records)
+# now access fields by name
+value = df['field_name']
+```
+
+---
+
+## Correction 039 — 2026-04-18 [AUTO]
+
+**Dataset:** GITHUB_REPOS | **Query ID:** 2
+**Failure pattern:** TypeError — integer index used on dict result
+
+**What was wrong:**
+GITHUB_REPOS Q2: agent hit max_iterations. execute_python failed with TypeError — agent accessed a list-of-dicts result using integer indices instead of field names.
+
+**Correct approach:**
+Always wrap tool results in pd.DataFrame() before field access. Use df['field_name'] not result[0]. Check result type with type(result) before processing.
+
+**Example:**
+
+```
+import pandas as pd
+# records is a list of dicts from query_db
+df = pd.DataFrame(records)
+# now access fields by name
+value = df['field_name']
+```
+
+---
+
+## Correction 040 — 2026-04-18 [AUTO]
+
+**Dataset:** GITHUB_REPOS | **Query ID:** 3
+**Failure pattern:** NaN/NameError in execute_python
+
+**What was wrong:**
+GITHUB_REPOS Q3: agent hit max_iterations. execute_python failed repeatedly with NameError — bare `nan` used instead of a valid null representation.
+
+**Correct approach:**
+Never use bare `nan` in execute_python. Use `float('nan')`, `pd.NA`, or `np.nan` (after importing numpy). Always add `import numpy as np` before using np.nan.
+
+**Example:**
+
+```
+import numpy as np
+import pandas as pd
+# correct null handling
+df = df.replace(float('nan'), np.nan)
+df = df.dropna(subset=['required_column'])
+```
+
+---
+
+## Correction 041 — 2026-04-18 [AUTO]
+
+**Dataset:** GITHUB_REPOS | **Query ID:** 4
+**Failure pattern:** Answer returned but failed validation
+
+**What was wrong:**
+GITHUB_REPOS Q4: agent returned an answer that did not pass validation. Terminate reason: llm_response_failed (APIStatusError): Error code: 402 - {'error': {'message': 'This request requires more credits, or fewer max_tokens. You requested up to 65536 tokens, but can only afford 40493. To increase, visit https://openrouter.ai/settings/keys and create a key with a higher weekly limit', 'code': 402, 'metadata': {'provider_name': None}}, 'user_id': 'org_3B7LqR6KG0MSzOr4fEskO8X8zKr'}. The failure category could not be automatically classified from tool call logs.
+
+**Correct approach:**
+Inspect the tool_calls.jsonl log for this query to identify which step produced the incorrect intermediate result. Check join keys, field names, and database routing.
+
+---
+
+## Correction 042 — 2026-04-18 [AUTO]
+
+**Dataset:** PANCANCER_ATLAS | **Query ID:** 2
+**Failure pattern:** Answer returned but failed validation
+
+**What was wrong:**
+PANCANCER_ATLAS Q2: agent returned an answer that did not pass validation. Terminate reason: llm_response_failed (APIStatusError): Error code: 402 - {'error': {'message': 'This request requires more credits, or fewer max_tokens. You requested up to 65536 tokens, but can only afford 34711. To increase, visit https://openrouter.ai/settings/keys and create a key with a higher weekly limit', 'code': 402, 'metadata': {'provider_name': None}}, 'user_id': 'org_3B7LqR6KG0MSzOr4fEskO8X8zKr'}. The failure category could not be automatically classified from tool call logs.
+
+**Correct approach:**
+Inspect the tool_calls.jsonl log for this query to identify which step produced the incorrect intermediate result. Check join keys, field names, and database routing.
+
+---
+
+## Correction 043 — 2026-04-18 [AUTO]
+
+**Dataset:** PANCANCER_ATLAS | **Query ID:** 3
+**Failure pattern:** Incorrect numeric computation
+
+**What was wrong:**
+PANCANCER_ATLAS Q3: agent returned a numeric answer but the value was computed incorrectly — likely due to integer truncation or incomplete data.
+
+**Correct approach:**
+Always CAST numeric columns to FLOAT before computing AVG in DuckDB: AVG(CAST(column AS FLOAT)). Always set MongoDB query limit to 10000 to avoid missing documents. Verify join key normalisation: strip prefixes before merging DataFrames.
+
+**Example:**
+
+```
+-- DuckDB: cast before averaging
+SELECT AVG(CAST(rating AS FLOAT)) FROM review WHERE business_ref IN (...)
+
+-- MongoDB: always set explicit limit
+{"collection": "business", "filter": {}, "limit": 10000}
+```
+
+---
+
+## Correction 044 — 2026-04-18 [AUTO]
+
+**Dataset:** PATENTS | **Query ID:** 2
+**Failure pattern:** Required entity name missing from answer
+
+**What was wrong:**
+PATENTS Q2: agent returned an answer but a required entity name or identifier was absent — likely queried the wrong field or database.
+
+**Correct approach:**
+Verify which database and field holds the entity name for this dataset. Use list_db to inspect available collections and tables before querying. For Yelp: business names are in MongoDB business collection 'name' field. For bookreview: book titles are in PostgreSQL books_info 'title' field.
+
+**Example:**
+
+```
+# Always verify field existence before selecting
+import pandas as pd
+df = pd.DataFrame(records)
+print(df.columns.tolist())  # confirm 'name' or 'title' field exists
+```
+
+---
+
+## Correction 045 — 2026-04-18 [AUTO]
+
+**Dataset:** PATENTS | **Query ID:** 3
+**Failure pattern:** Answer returned but failed validation
+
+**What was wrong:**
+PATENTS Q3: agent returned an answer that did not pass validation. Terminate reason: llm_response_failed (APIStatusError): Error code: 402 - {'error': {'message': 'This request requires more credits, or fewer max_tokens. You requested up to 65536 tokens, but can only afford 31570. To increase, visit https://openrouter.ai/settings/keys and create a key with a higher weekly limit', 'code': 402, 'metadata': {'provider_name': None}}, 'user_id': 'org_3B7LqR6KG0MSzOr4fEskO8X8zKr'}. The failure category could not be automatically classified from tool call logs.
+
+**Correct approach:**
+Inspect the tool_calls.jsonl log for this query to identify which step produced the incorrect intermediate result. Check join keys, field names, and database routing.

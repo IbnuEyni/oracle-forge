@@ -73,7 +73,10 @@ def validate_query(dataset: str, query_id: int, llm_answer: str) -> tuple[bool, 
     if not validate_path.exists():
         return False, "No validate.py found"
     ns = {}
-    exec(validate_path.read_text(), ns)
+    # Ensure common_scaffold (and other DAB modules) are importable inside exec
+    if str(DAB_PATH) not in sys.path:
+        sys.path.insert(0, str(DAB_PATH))
+    exec(compile(validate_path.read_text(), str(validate_path), "exec"), ns)
     return ns["validate"](llm_answer)
 
 
