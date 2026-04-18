@@ -20,13 +20,12 @@ env["ORACLE_FORGE_KB_INJECT"] = "1"
 # We use -c to run a small bootstrap that imports kb_injector first
 bootstrap = f"""
 import sys
+import os
 sys.path.insert(0, '{AGENT_DIR}')
 sys.path.insert(0, '{DAB_PATH}')
 import kb_injector
-import os
 os.chdir('{DAB_PATH}')
-import runpy
-runpy.run_path('{DAB_PATH}/run_agent.py', run_name='__main__')
+exec(open('{DAB_PATH}/run_agent.py').read())
 """
 
 result = subprocess.run(
