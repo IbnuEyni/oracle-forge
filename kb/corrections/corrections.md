@@ -277,3 +277,22 @@ yelp Q7: agent hit max_iterations with no recorded tool errors. The agent may ha
 
 **Correct approach:**
 Increase --iterations to 30. Add dataset-specific hints to db_description_withhint.txt to guide the first query. Check that the correct database type is being queried for this dataset.
+
+---
+
+## Correction 013 — 2026-04-18
+
+**Dataset:** bookreview | **Query ID:** 2
+**Failure pattern:** ERROR — missing dataset directory on server
+
+**What was wrong:**
+`[Errno 2] No such file or directory: 'query_bookreview/query'` — the bookreview dataset directory is not present on the server. The agent cannot find the query files to run.
+
+**Correct approach:**
+This is a server setup issue, not an agent logic issue. Before running bookreview queries, verify the dataset exists:
+```bash
+ls ~/DataAgentBench/query_bookreview/
+```
+If missing, the Driver must load the bookreview dataset onto the server before evaluation can proceed.
+
+**Status:** Pending — requires Driver to load bookreview dataset on server.
