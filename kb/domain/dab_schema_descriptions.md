@@ -24,12 +24,23 @@
   - The dataset is an early validation target because it contains multi-source joins, unstructured fields, and entity resolution challenges.
 - Common challenge: join MongoDB business documents to DuckDB ratings records without a clean shared key.
 
-### Other DAB datasets
+### CRM Arena Pro dataset
 
-- Finance and AML datasets usually require strict ID matching and authority on financial entities.
-- Telecom datasets often contain account/customer identifiers in multiple formats and service codes.
-- Healthcare datasets commonly include free-text notes or descriptions that must be transformed before use.
-- Retail datasets often include product descriptions, repeat purchase metrics, and segment definitions.
+- Domain: customer relationship management (CRM) / sales pipeline.
+- Uses SQLite, DuckDB, and PostgreSQL in the same dataset.
+- Known characteristics:
+  - Six databases: core_crm (SQLite), sales_pipeline (DuckDB), support (PostgreSQL), products_orders (SQLite), activities (DuckDB), territory (SQLite).
+  - 27 tables across all databases with complex cross-database joins on AccountId, ContactId, LeadId, etc.
+  - Salesforce-style 18-character IDs with ~25% corruption (leading '#').
+  - Unstructured text in descriptions, transcripts, and support notes requiring extraction.
+  - Domain concepts: BANT factors for lead qualification, sales stages, knowledge articles for support.
+- Common challenge: multi-database joins with ID corruption and unstructured text extraction for lead qualification or support resolution.
+- Known query patterns:
+  - Lead qualification: Check VoiceCallTranscript__c.Body__c for BANT factors (Budget, Authority, Need, Timeline).
+  - Support resolution: Match Case.description to knowledge__kav.faq_answer__c for article recommendations.
+  - Sales forecasting: Aggregate Opportunity.Amount by StageName and CloseDate.
+  - Customer activity: Join Account to Event/Task via WhatId for engagement history.
+  - Territory performance: Join UserTerritory2Association to Opportunity via OwnerId for regional metrics.
 
 ## 3. Common cross-database entity resolution challenges
 

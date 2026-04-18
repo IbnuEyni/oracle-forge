@@ -1,4 +1,5 @@
 ## v2 — 2026-04-11 — Intelligence Officers (BLOOM Team)
+- dab_schema_descriptions.md — Added CRM Arena Pro dataset description (INJECTION TEST: PENDING)
 - dab-failure-categories.md — 4 DAB failure categories with agent mitigation strategies (INJECTION TEST: PASS)
 - join-key-glossary.md — ID format mismatches across databases with normalization patterns (INJECTION TEST: PASS)
 - unstructured-field-inventory.md — Free-text fields inventory with extraction patterns (INJECTION TEST: PASS)

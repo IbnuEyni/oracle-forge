@@ -1,4 +1,5 @@
 ## v2 — 2026-04-18 — Nebiyou Abebe (BLOOM Team)
+- schema-crmarenapro.md — SQLite + DuckDB + PostgreSQL, multi-ID joins with corruption handling (INJECTION TEST: PASS)
 - schema-music-brainz.md — SQLite + DuckDB, join on track_id
 - schema-deps-dev.md — SQLite + DuckDB, composite join on System+Name+Version
 - schema-github-repos.md — SQLite + DuckDB, join on repo_name

@@ -28,6 +28,30 @@ This document provides precise definitions for frequently ambiguous business ter
 - **Key Distinction**: Requires correct denominator (eligible base) and observation period, not simply raw order counts.
 - **Why it matters**: Incorrect calculation understates or overstates true customer loyalty.
 
+### BANT factors (Budget, Authority, Need, Timeline)
+
+- **Definition**: Lead qualification framework where B=Budget (financial capacity), A=Authority (decision-making power), N=Need (requirement fit), T=Timeline (purchase urgency).
+- **Key Distinction**: A lead fails qualification if any single factor is missing; all four must be present for a qualified lead.
+- **Why it matters**: Misinterpreting BANT leads to pursuing unqualified prospects and wasting sales resources.
+
+### sales stage / opportunity stage
+
+- **Definition**: Progressive phases in the sales pipeline: Qualification → Discovery → Quote → Negotiation → Closed (Won/Lost).
+- **Key Distinction**: Stages are sequential gates; an opportunity cannot skip stages or regress without explicit reason.
+- **Why it matters**: Incorrect stage assignment distorts pipeline forecasting and conversion rate calculations.
+
+### support case priority
+
+- **Definition**: Urgency levels for customer issues: Critical (system down), High (major functionality impacted), Medium (partial impact), Low (cosmetic/minor).
+- **Key Distinction**: Priority determines SLA response times and escalation paths, not just severity.
+- **Why it matters**: Misprioritizing cases delays critical resolutions and frustrates high-value customers.
+
+### knowledge article
+
+- **Definition**: Structured FAQ or troubleshooting content used by support agents to resolve common issues.
+- **Key Distinction**: Articles have unique IDs and are referenced by cases; not all issues have matching articles.
+- **Why it matters**: Failing to find relevant articles leads to inconsistent resolutions and repeated escalations.
+
 ### customer segments
 
 - **Definition**: Groups of customers defined by explicit business rules in the dataset (e.g., revenue tier, behavior cluster, account type, or purchase history).
