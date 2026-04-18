@@ -34,4 +34,40 @@ result = subprocess.run(
     env=env,
     cwd=DAB_PATH
 )
+
+# Post-run: show query + result + validation
+try:
+    import argparse, json, glob
+    p = argparse.ArgumentParser()
+    p.add_argument("--dataset"); p.add_argument("--query_id", type=int)
+    args, _ = p.parse_known_args()
+    if args.dataset and args.query_id:
+        query_dir = os.path.join(DAB_PATH, f"query_{args.dataset}", f"query{args.query_id}")
+        # Show query
+        q = json.load(open(os.path.join(query_dir, "query.json")))
+        question = q if isinstance(q, str) else q.get("query", str(q))
+        print(f"\n{'='*60}")
+        print(f"QUERY:  {question}")
+        # Show result
+        logs = sorted(glob.glob(f"{query_dir}/logs/data_agent/*/final_agent.json"), reverse=True)
+        if logs:
+            d = json.load(open(logs[0]))
+            answer = d.get("final_result", "") or "EMPTY"
+            terminate = d.get("terminate_reason", "")
+            calls = d.get("llm_call_count", 0)
+            print(f"ANSWER: {answer[:120]}")
+            print(f"TERMINATE: {terminate} | LLM CALLS: {calls}")
+            # Validate
+            validate_path = os.path.join(query_dir, "validate.py")
+            if os.path.exists(validate_path):
+                sys.path.insert(0, DAB_PATH)
+                ns = {}
+                exec(open(validate_path).read(), ns)
+                v = ns["validate"](answer)
+                status = "✅ PASS" if v[0] else "❌ FAIL"
+                print(f"RESULT: {status} | {v[1]}")
+        print(f"{'='*60}\n")
+except Exception:
+    pass
+
 sys.exit(result.returncode)
