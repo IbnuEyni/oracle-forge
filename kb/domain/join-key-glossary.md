@@ -26,6 +26,24 @@ CAST(REPLACE(user_id, 'USR-', '') AS INTEGER)
 CAST(user_id AS INTEGER)
 ```
 
+### CRM Entity IDs (Salesforce-style)
+
+| Database | Field Name | Format | Example |
+|---|---|---|---|
+| SQLite (core_crm) | `Id` | 18-char string, may have leading '#' | `001Wt00000PFj4zIAD` or `#001Wt00000PFj4zIAD` |
+| DuckDB (sales_pipeline) | `AccountId`, `ContactId`, etc. | 18-char string, clean | `001Wt00000PFj4zIAD` |
+| PostgreSQL (support) | `accountid`, `contactid` | 18-char string, may have leading '#' | `001Wt00000PFj4zIAD` or `#001Wt00000PFj4zIAD` |
+| SQLite (products_orders) | `AccountId` | 18-char string, clean | `001Wt00000PFj4zIAD` |
+| DuckDB (activities) | `WhatId`, `OwnerId` | 18-char string, clean | `001Wt00000PFj4zIAD` |
+| SQLite (territory) | `UserId` | 18-char string, clean | `001Wt00000PFj4zIAD` |
+
+**Normalization:** Strip leading '#' if present, case-sensitive comparison.
+
+```sql
+-- All sides
+TRIM(LEADING '#' FROM id_field)
+```
+
 ### Device IDs
 
 | Database | Field Name | Format | Example |

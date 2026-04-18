@@ -19,6 +19,29 @@ This document lists database fields that contain free-text or semi-structured da
 | `orders` | `special_instructions` | Customer order notes | `"Ship to alternate address: 123 Main St"` |
 | `products` | `description` | Product description text | `"Premium analytics dashboard with real-time alerts"` |
 
+### CRM Arena Pro (PostgreSQL, SQLite, DuckDB)
+
+| Database | Table | Field | Content Type | Example Value |
+|---|---|---|---|---|
+| PostgreSQL (support) | `Case` | `subject` | Case subject line | `"Login issues after password reset"` |
+| PostgreSQL (support) | `Case` | `description` | Case description | `"User cannot access account since changing password"` |
+| PostgreSQL (support) | `knowledge__kav` | `faq_answer__c` | FAQ answer text | `"To reset password, click 'Forgot Password' on login page"` |
+| PostgreSQL (support) | `knowledge__kav` | `summary` | Article summary | `"Password reset process for account recovery"` |
+| PostgreSQL (support) | `emailmessage` | `textbody` | Email content | `"Dear support, I need help with my order #12345"` |
+| PostgreSQL (support) | `livechattranscript` | `body` | Chat transcript | `"Agent: Hello, how can I help? User: My order is delayed"` |
+| SQLite (core_crm) | `Account` | `Description` | Account description | `"Tech startup in San Francisco, 50 employees"` |
+| DuckDB (sales_pipeline) | `Opportunity` | `Description` | Opportunity description | `"Enterprise deal for 1000 licenses, closing Q4"` |
+| DuckDB (sales_pipeline) | `Quote` | `Description` | Quote description | `"Discounted pricing for annual commitment"` |
+| DuckDB (sales_pipeline) | `Contract` | `Description` | Contract description | `"3-year agreement with SLA guarantees"` |
+| SQLite (products_orders) | `Product2` | `Description` | Product description | `"Cloud analytics platform with ML insights"` |
+| SQLite (products_orders) | `Pricebook2` | `Description` | Pricebook description | `"Standard pricing for US market"` |
+| DuckDB (activities) | `Event` | `Subject` | Event subject | `"Demo call with Acme Corp"` |
+| DuckDB (activities) | `Event` | `Description` | Event description | `"Product demo and Q&A session"` |
+| DuckDB (activities) | `Task` | `Subject` | Task subject | `"Follow up on quote #Q-456"` |
+| DuckDB (activities) | `Task` | `Description` | Task description | `"Send updated pricing and contract terms"` |
+| DuckDB (activities) | `VoiceCallTranscript__c` | `Body__c` | Call transcript | `"Discussed budget constraints and timeline requirements"` |
+| SQLite (territory) | `Territory2` | `Description` | Territory description | `"West Coast enterprise accounts"` |
+
 ### MongoDB
 
 | Collection | Field | Content Type | Example Value |
