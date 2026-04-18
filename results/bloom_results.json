@@ -4,6 +4,8 @@
   "model": "google/gemini-3.1-pro-preview",
   "timestamp": "2026-04-18T21:00:00Z",
   "agent_repo": "https://github.com/IbnuEyni/oracle-forge",
+  "dab_pr": "https://github.com/ucbepic/DataAgentBench/pulls (PR pending)",
+  "score_log": "eval/score_log.jsonl",
   "overall": {
     "passed": 19,
     "total": 54,

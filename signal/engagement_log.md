@@ -14,8 +14,9 @@ Each entry: Date | Platform | Link | What it was about | Response (if any)
 | 4/14/2026 | Abdurahim | X        | https://x.com/abdugreat2/status/2043783397131079819                                                                             | Context Across Databases               |
 | 4/9/2026  | Efrata    | Reddit   | https://www.reddit.com/r/MachineLearning/comments/1la46eq/comment/og2zrbn/                                                      | Enterprise data integration nightmares |
 | 4/15/2026 | Efrata    | Medium   | https://medium.com/p/7f7bb25557bf                                                                                               | What a Knowledge Base Actually Does to an AI Agent |
-| 4/18/2026 | Abdurahim | X | https://x.com/abdugreat2/status/2045464433971892247 | Sprint 2 of building a production-grade data agent |
-| 4/18/2026 | Abdurahim | Medium | https://medium.com/@AbdurahimM./building-a-production-grade-data-agent-lessons-from-oracle-forge-13c29b6cccc6 | Building a Production-Grade Data Agent: Lessons from Oracle Forge |
+| 4/18/2026 | Abdurahim | X        | https://x.com/abdugreat2/status/2045464433971892247                                                                             | Sprint 2 of building a production-grade data agent |
+| 4/18/2026 | Abdurahim | Medium   | https://medium.com/@AbdurahimM./building-a-production-grade-data-agent-lessons-from-oracle-forge-13c29b6cccc6                   | Building a Production-Grade Data Agent: Lessons from Oracle Forge |
+| 4/18/2026 | BLOOM     | GitHub   | https://github.com/ucbepic/DataAgentBench (PR pending)                                                                          | DAB Benchmark Submission — 19/54 = 35.2% pass@1 |
 
 
 ## Community Participation Log
