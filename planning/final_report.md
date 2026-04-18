@@ -432,7 +432,7 @@ Corrections and critical domain docs always fit. Lower-priority docs are skipped
 | 2026-04-15 | Efrata    | Medium   | https://medium.com/p/7f7bb25557bf                                                                                               | KB impact on AI agents                 | Medium — 600+ words, public |
 | 2026-04-18 | Abdurahim | X        | https://x.com/abdugreat2/status/2045464433971892247                                                                             | Sprint 2 production data agent         | X — public, indexed by search |
 | 2026-04-18 | Abdurahim | Medium   | https://medium.com/@AbdurahimM./building-a-production-grade-data-agent-lessons-from-oracle-forge-13c29b6cccc6                   | Oracle Forge lessons                   | Medium — 600+ words, public |
-| 2026-04-18 | BLOOM     | GitHub   | https://github.com/ucbepic/DataAgentBench (PR pending)                                                                          | DAB benchmark submission               | DAB community — UC Berkeley benchmark repo |
+| 2026-04-18 | BLOOM     | GitHub   | https://github.com/ucbepic/DataAgentBench/pull/36                                                                               | DAB benchmark submission               | DAB community — UC Berkeley benchmark repo |
 
 ### Notable Responses and Community Intelligence
 
@@ -446,6 +446,8 @@ Abdurahim's post on cross-database key clarity received engagement from connecti
 Reddit r/MachineLearning (2.3M members) — technically deep community, substantive responses that changed technical direction. LinkedIn reached broader professional audience. X posts were indexed publicly but generated less direct engagement during the evaluation window.
 
 **DAB repository monitoring:** No competing submissions from other teams during our evaluation window — confirmed by watching the leaderboard_submissions/ folder on GitHub.
+
+**DAB PR submitted:** https://github.com/ucbepic/DataAgentBench/pull/36
 
 ---
 
