@@ -63,7 +63,7 @@ PostgreSQL SQLite         (other datasets)
 | 2026-04-18 | stockmarket | gemini-3.1-pro-preview | 1/5 = 20.0% |
 | 2026-04-18 | music_brainz_20k | gemini-3.1-pro-preview | 1/3 = 33.3% |
 
-**Overall: 19/54 = 35.2% pass@1 — beats 38% DAB baseline on completed datasets**
+**Overall: 19/54 = 35.2% pass@1 — DAB leaderboard leader is 54.3% (PromptQL + Gemini-3.1-Pro)**
 
 ## Setup
 
@@ -107,4 +107,4 @@ oracle-forge/
 
 - Benchmark: DataAgentBench (54 queries, 12 datasets)
 - Best published score: 54.3% (PromptQL + Gemini-3.1-Pro)
-- Our target: Beat 38% pass@1 baseline
+- Our target: Approach 54.3% leaderboard leader through context engineering
