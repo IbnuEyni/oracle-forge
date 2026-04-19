@@ -52,7 +52,7 @@ PostgreSQL SQLite         (other datasets)
 
 | Date | Dataset | Model | Score |
 | ---- | ------- | ----- | ----- |
-
+| 2026-04-11 | yelp | gemini-2.5-flash | 0/7 = 0% |
 | 2026-04-11 | yelp | gemini-3.1-pro-preview | 2/7 = 28.6% |
 | 2026-04-13 | yelp | gemini-3.1-pro-preview | 4/7 = 57.1% |
 | 2026-04-18 | bookreview | gemini-3.1-pro-preview | 3/3 = 100% |
@@ -94,6 +94,13 @@ python ~/oracle-forge/eval/harness.py --dataset yelp \
 ```
 oracle-forge/
 ├── agent/          # oracle_run.py, kb_injector.py, AGENT.md
+│   ├── oracle_run.py         # Entry point — runs DAB agent with KB injection
+│   ├── kb_injector.py        # Monkey-patches DataAgent.__init__ to inject 3 KB layers
+│   ├── DataAgent_patched.py  # Reference copy of DAB DataAgent with OpenRouter routing added
+│   │                         # (google/, anthropic/, openai/ prefixes route to OpenRouter)
+│   │                         # Applied to DataAgentBench/common_scaffold/DataAgent.py on server
+│   ├── AGENT.md              # Architecture overview and score history
+│   └── tools.yaml            # MCP Toolbox config for all 4 DB types
 ├── kb/             # Knowledge Base (architecture, domain, evaluation, corrections)
 ├── eval/           # Evaluation harness + score_log.jsonl
 ├── probes/         # Adversarial probe library
