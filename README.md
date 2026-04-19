@@ -50,18 +50,17 @@ PostgreSQL SQLite         (other datasets)
 
 ## Score Progression
 
-| Date | Dataset | Model | Score |
-| ---- | ------- | ----- | ----- |
-| 2026-04-11 | yelp | gemini-2.5-flash | 0/7 = 0% |
-| 2026-04-11 | yelp | gemini-3.1-pro-preview | 2/7 = 28.6% |
-| 2026-04-13 | yelp | gemini-3.1-pro-preview | 4/7 = 57.1% |
-| 2026-04-18 | bookreview | gemini-3.1-pro-preview | 3/3 = 100% |
-| 2026-04-18 | stockindex | gemini-3.1-pro-preview | 2/3 = 66.7% |
-| 2026-04-18 | crmarenapro | gemini-3.1-pro-preview | 6/13 = 46.2% |
-| 2026-04-18 | googlelocal | gemini-3.1-pro-preview | 1/4 = 25.0% |
-| 2026-04-18 | agnews | gemini-3.1-pro-preview | 1/4 = 25.0% |
-| 2026-04-18 | stockmarket | gemini-3.1-pro-preview | 1/5 = 20.0% |
-| 2026-04-18 | music_brainz_20k | gemini-3.1-pro-preview | 1/3 = 33.3% |
+| Date       | Dataset          | Model                  | Score        |
+| ---------- | ---------------- | ---------------------- | ------------ |
+| 2026-04-11 | yelp             | gemini-3.1-pro-preview | 2/7 = 28.6%  |
+| 2026-04-13 | yelp             | gemini-3.1-pro-preview | 4/7 = 57.1%  |
+| 2026-04-18 | bookreview       | gemini-3.1-pro-preview | 3/3 = 100%   |
+| 2026-04-18 | stockindex       | gemini-3.1-pro-preview | 2/3 = 66.7%  |
+| 2026-04-18 | crmarenapro      | gemini-3.1-pro-preview | 6/13 = 46.2% |
+| 2026-04-18 | googlelocal      | gemini-3.1-pro-preview | 1/4 = 25.0%  |
+| 2026-04-18 | agnews           | gemini-3.1-pro-preview | 1/4 = 25.0%  |
+| 2026-04-18 | stockmarket      | gemini-3.1-pro-preview | 1/5 = 20.0%  |
+| 2026-04-18 | music_brainz_20k | gemini-3.1-pro-preview | 1/3 = 33.3%  |
 
 **Overall: 19/54 = 35.2% pass@1 — DAB leaderboard leader is 54.3% (PromptQL + Gemini-3.1-Pro)**
 
